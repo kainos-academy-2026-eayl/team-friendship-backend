@@ -69,10 +69,12 @@ Never commit your `.env` file. It is already listed in [.gitignore](.gitignore);
 | `npm run typecheck` | `tsc` | Checks types without emitting files. |
 | `npm run build` | `tsc` then `esbuild` | Type-checks, then bundles the service into `dist/index.js` for production. |
 | `npm run lint` | `oxlint --deny-warnings src` | Checks TypeScript source; warnings fail the command. |
+| `npm run format` | `prettier --check src` | Checks source formatting without rewriting files; fails on differences. |
+| `npm run format:fix` | `prettier --write src` | Applies the configured source formatting locally. |
 | `npm test` | `vitest run` | Runs tests once with Vitest and exits on completion. |
 | `npm run prepare` | `node .husky/install.mjs` | Installs Git hooks after development dependency installs; skips production, CI, and `HUSKY=0`. |
 | `npm start` | `node dist/index.js` | Runs the built output. Requires `npm run build` first. |
-Before pushing, run `npm run build`, `npm run lint`, and `npm test`.
+Before pushing, run `npm run build`, `npm run format`, `npm run lint`, and `npm test`.
 
 Husky runs build, lint, and tests before each commit. If any command fails, the
 commit stops. GitHub Actions runs the same checks independently because local
@@ -85,7 +87,7 @@ they do not require development dependencies.
 [The CI workflow](.github/workflows/ci.yml) runs on pull requests when opened,
 reopened, or updated, and on pushes to `main` or `master`, including merges.
 It uses Node 22, installs locked dependencies with `npm ci`, then runs build,
-lint, and tests in order. Any failure fails the job; later steps do not hide it.
+formatting, lint, and tests in order. Any failure fails the job; later steps do not hide it.
 
 The workflow alone does not block merging. An administrator must configure
 the following in **both the backend and frontend GitHub repositories**:
