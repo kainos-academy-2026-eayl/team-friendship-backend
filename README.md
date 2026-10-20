@@ -68,8 +68,41 @@ Never commit your `.env` file. It is already listed in [.gitignore](.gitignore);
 | `npm run dev` | `tsx watch src/index.ts` | Runs the service from TypeScript source and restarts on file changes. Use this while developing. |
 | `npm run typecheck` | `tsc` | Checks types without emitting files. |
 | `npm run build` | `tsc` then `esbuild` | Type-checks, then bundles the service into `dist/index.js` for production. |
+| `npm run lint` | `oxlint --deny-warnings src` | Checks TypeScript source; warnings fail the command. |
+| `npm test` | `vitest run` | Runs tests once with Vitest and exits on completion. |
+| `npm run prepare` | `husky` | Installs Git hooks automatically after npm installs dependencies. |
 | `npm start` | `node dist/index.js` | Runs the built output. Requires `npm run build` first. |
-Before pushing, run `npm run typecheck` and `npm run build`.
+Before pushing, run `npm run build`, `npm run lint`, and `npm test`.
+
+Husky runs build, lint, and tests before each commit. If any command fails, the
+commit stops. GitHub Actions runs the same checks independently because local
+hooks can be bypassed. CI sets `HUSKY=0` to skip installing local Git hooks.
+
+## Continuous integration and required checks
+
+[The CI workflow](.github/workflows/ci.yml) runs on pull requests when opened,
+reopened, or updated, and on pushes to `main` or `master`, including merges.
+It uses Node 22, installs locked dependencies with `npm ci`, then runs build,
+lint, and tests in order. Any failure fails the job; later steps do not hide it.
+
+The workflow alone does not block merging. An administrator must configure
+the following in **both the backend and frontend GitHub repositories**:
+
+1. Push the workflow branch and open a pull request so GitHub records the
+  **Build, lint and test** check.
+2. In **Settings > Branches**, add or edit a branch protection rule for `main`.
+  Repeat for `master` if that branch exists or is used.
+3. Enable **Require a pull request before merging** and **Require status checks
+  to pass before merging**. Select **Build, lint and test** from GitHub Actions.
+4. Enable **Require branches to be up to date before merging** and **Do not allow
+  bypassing the above settings**, including administrators. Do not allow force
+  pushes or branch deletion. Save the rule.
+5. Verify that a pull request with a failing check cannot merge, then fix the
+  failure and confirm that the check passes.
+
+These repository settings must be applied on GitHub; committing YAML cannot
+enable branch protection. A failure after merge cannot undo that merge, which
+is why the pull-request check must be required beforehand.
 
 ## Project structure
 

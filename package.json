@@ -7,6 +7,9 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "npm run typecheck && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/index.js --sourcemap",
+    "lint": "oxlint --deny-warnings src",
+    "test": "vitest run",
+    "prepare": "husky",
     "typecheck": "tsc",
     "start": "node dist/index.js"
   },
@@ -17,8 +20,11 @@
     "@types/express": "5.0.6",
     "@types/node": "26.4.1",
     "esbuild": "0.28.2",
+    "husky": "^9.1.7",
+    "oxlint": "^1.89.0",
     "tsx": "4.23.13",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vitest": "^5.0.5"
   },
   "dependencies": {
     "dotenv": "17.4.2",
