@@ -1,2 +1,2 @@
-const courseName = "Build & Verify";
-console.log(`Hello from ${courseName}!`);
+const courseName = 'Build & Verify'
+console.log(`Hello from ${courseName}!`)

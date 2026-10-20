@@ -68,8 +68,11 @@ Never commit your `.env` file. It is already listed in [.gitignore](.gitignore);
 | `npm run dev` | `tsx watch src/index.ts` | Runs the service from TypeScript source and restarts on file changes. Use this while developing. |
 | `npm run typecheck` | `tsc` | Checks types without emitting files. |
 | `npm run build` | `tsc` then `esbuild` | Type-checks, then bundles the service into `dist/index.js` for production. |
+| `npm run lint` | `biome check .` | Checks formatting, imports, and lint rules. |
+| `npm run lint:fix` | `biome check --write .` | Automatically fixes supported formatting and lint issues. |
 | `npm start` | `node dist/index.js` | Runs the built output. Requires `npm run build` first. |
-Before pushing, run `npm run typecheck` and `npm run build`.
+
+Husky runs `npm run lint` before each Git push. Run `npm run typecheck` and `npm run build` before pushing as well.
 
 ## Project structure
 
