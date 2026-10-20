@@ -70,13 +70,15 @@ Never commit your `.env` file. It is already listed in [.gitignore](.gitignore);
 | `npm run build` | `tsc` then `esbuild` | Type-checks, then bundles the service into `dist/index.js` for production. |
 | `npm run lint` | `oxlint --deny-warnings src` | Checks TypeScript source; warnings fail the command. |
 | `npm test` | `vitest run` | Runs tests once with Vitest and exits on completion. |
-| `npm run prepare` | `husky` | Installs Git hooks automatically after npm installs dependencies. |
+| `npm run prepare` | `node .husky/install.mjs` | Installs Git hooks after development dependency installs; skips production, CI, and `HUSKY=0`. |
 | `npm start` | `node dist/index.js` | Runs the built output. Requires `npm run build` first. |
 Before pushing, run `npm run build`, `npm run lint`, and `npm test`.
 
 Husky runs build, lint, and tests before each commit. If any command fails, the
 commit stops. GitHub Actions runs the same checks independently because local
 hooks can be bypassed. CI sets `HUSKY=0` to skip installing local Git hooks.
+Production installs with `npm ci --omit=dev` skip Husky before loading it, so
+they do not require development dependencies.
 
 ## Continuous integration and required checks
 

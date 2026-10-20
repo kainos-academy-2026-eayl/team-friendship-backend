@@ -9,7 +9,7 @@
     "build": "npm run typecheck && esbuild src/index.ts --bundle --platform=node --format=esm --target=node22 --packages=external --outfile=dist/index.js --sourcemap",
     "lint": "oxlint --deny-warnings src",
     "test": "vitest run",
-    "prepare": "husky",
+    "prepare": "node .husky/install.mjs",
     "typecheck": "tsc",
     "start": "node dist/index.js"
   },
