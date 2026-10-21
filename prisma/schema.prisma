@@ -20,12 +20,6 @@ model Customer {
     postcode         String
     customerEmail    String
     customerPhone    String
-    customerLogin    CustomerLogin?
+    customerPassword String
   }
  
-  model CustomerLogin {
-    customerID Int @id
-    custUsername    String
-    custPassword String
-    customer   Customer @relation(fields: [customerID], references: [customerID])
-  }
