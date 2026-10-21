@@ -12,3 +12,20 @@ datasource db {
   provider = "postgresql"
 }
 
+model Customer {
+    customerID       Int    @id @default(autoincrement())
+    customerForename String
+    customerSurname  String
+    address          String
+    postcode         String
+    customerEmail    String
+    customerPhone    String
+    customerLogin    CustomerLogin?
+  }
+ 
+  model CustomerLogin {
+    customerID Int @id
+    custUsername    String
+    custPassword String
+    customer   Customer @relation(fields: [customerID], references: [customerID])
+  }
