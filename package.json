@@ -25,11 +25,13 @@
     "husky": "^9.1.7",
     "oxlint": "^1.89.0",
     "prettier": "^3.9.10",
+    "prisma": "^7.10.1",
     "tsx": "4.23.13",
     "typescript": "7.0.2",
     "vitest": "^5.0.5"
   },
   "dependencies": {
+    "@prisma/client": "^7.10.1",
     "dotenv": "17.4.2",
     "express": "5.2.1"
   }
