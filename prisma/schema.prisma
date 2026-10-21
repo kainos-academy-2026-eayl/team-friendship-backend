@@ -12,3 +12,14 @@ datasource db {
   provider = "postgresql"
 }
 
+model Customer {
+    customerID       Int    @id @default(autoincrement())
+    customerForename String
+    customerSurname  String
+    address          String
+    postcode         String
+    customerEmail    String
+    customerPhone    String
+    customerPassword String
+  }
+ 
