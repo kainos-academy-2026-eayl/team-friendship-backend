@@ -12,7 +12,21 @@ export type BasketItemWithProduct = {
   product: Product
 }
 
+export type BasketAddItemResult =
+  | { kind: 'added'; item: BasketItemWithProduct }
+  | { kind: 'product-not-found' }
+  | { kind: 'insufficient-stock'; stock: number }
+
 let prismaClient: PrismaClient | undefined
+
+function isTransactionConflict(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    error.code === 'P2034'
+  )
+}
 
 function getPrismaClient(): PrismaClient {
   if (!prismaClient) {
@@ -54,6 +68,48 @@ export class BasketRepository {
       where: { customerID_productID: { customerID, productID } },
       include: { product: true },
     })
+  }
+
+  async addItemWithStock(
+    customerID: number,
+    productID: number,
+    quantity: number,
+  ): Promise<BasketAddItemResult> {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      try {
+        return await this.prisma.$transaction(
+          async (transaction) => {
+            const product = await transaction.product.findUnique({
+              where: { productID },
+            })
+            if (!product) return { kind: 'product-not-found' }
+
+            const existing = await transaction.basket.findUnique({
+              where: { customerID_productID: { customerID, productID } },
+            })
+            const newQuantity = (existing?.quantity ?? 0) + quantity
+            if (newQuantity > product.productStock) {
+              return {
+                kind: 'insufficient-stock',
+                stock: product.productStock,
+              }
+            }
+
+            const item = await transaction.basket.upsert({
+              where: { customerID_productID: { customerID, productID } },
+              create: { customerID, productID, quantity: newQuantity },
+              update: { quantity: newQuantity },
+              include: { product: true },
+            })
+            return { kind: 'added', item }
+          },
+          { isolationLevel: 'Serializable' },
+        )
+      } catch (error) {
+        if (!isTransactionConflict(error) || attempt === 2) throw error
+      }
+    }
+    throw new Error('Basket addition transaction retries exhausted')
   }
 
   upsertItem(

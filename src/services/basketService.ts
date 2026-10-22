@@ -31,9 +31,9 @@ export type BasketDto = {
 type BasketRepositoryContract = Pick<
   BasketRepository,
   | 'findCustomerById'
-  | 'findProductById'
   | 'findItemsByCustomer'
   | 'findItem'
+  | 'addItemWithStock'
   | 'upsertItem'
   | 'deleteItem'
   | 'deleteAllItems'
@@ -83,15 +83,18 @@ export class BasketService {
   ): Promise<BasketItemDto> {
     assertPositiveInteger(quantity, 'quantity')
     await this.ensureCustomerExists(customerID)
-    const product = await this.ensureProductExists(productID)
-
-    const existing = await this.repository.findItem(customerID, productID)
-    const newQuantity = (existing?.quantity ?? 0) + quantity
-    this.ensureStockAvailable(product.productStock, newQuantity)
-
-    return toItemDto(
-      await this.repository.upsertItem(customerID, productID, newQuantity),
+    const result = await this.repository.addItemWithStock(
+      customerID,
+      productID,
+      quantity,
     )
+    if (result.kind === 'product-not-found') {
+      throw new BasketError(`Product ${productID} not found`, 404)
+    }
+    if (result.kind === 'insufficient-stock') {
+      throw new BasketError(`Only ${result.stock} item(s) in stock`, 409)
+    }
+    return toItemDto(result.item)
   }
 
   async updateItemQuantity(
@@ -124,14 +127,6 @@ export class BasketService {
     if (!(await this.repository.findCustomerById(customerID))) {
       throw new BasketError(`Customer ${customerID} not found`, 404)
     }
-  }
-
-  private async ensureProductExists(productID: number) {
-    const product = await this.repository.findProductById(productID)
-    if (!product) {
-      throw new BasketError(`Product ${productID} not found`, 404)
-    }
-    return product
   }
 
   private async ensureItemInBasket(customerID: number, productID: number) {

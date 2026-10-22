@@ -24,10 +24,28 @@ beforeEach(() => {
   service = new BasketService({
     findCustomerById: async (id) =>
       id === customer.customerID ? customer : null,
-    findProductById: async (id) => (id === product.productID ? product : null),
     findItemsByCustomer: async (id) =>
       [...items.values()].filter((i) => i.customerID === id),
     findItem: async (c, p) => items.get(key(c, p)) ?? null,
+    addItemWithStock: async (c, p, quantity) => {
+      if (p !== product.productID) return { kind: 'product-not-found' }
+      const existing = items.get(key(c, p))
+      const newQuantity = (existing?.quantity ?? 0) + quantity
+      if (newQuantity > product.productStock) {
+        return {
+          kind: 'insufficient-stock',
+          stock: product.productStock,
+        }
+      }
+      const item = {
+        customerID: c,
+        productID: p,
+        quantity: newQuantity,
+        product,
+      }
+      items.set(key(c, p), item)
+      return { kind: 'added', item }
+    },
     upsertItem: async (c, p, quantity) => {
       const item = { customerID: c, productID: p, quantity, product }
       items.set(key(c, p), item)
@@ -60,6 +78,14 @@ test('adding the same product twice accumulates quantity and totals', async () =
   assert.equal(basket.items.length, 1)
   assert.equal(basket.totalItems, 3)
   assert.equal(basket.totalPrice, 14.97)
+})
+
+test('overlapping additions both contribute to the basket quantity', async () => {
+  await service.addItem(1, 10, 1)
+
+  await Promise.all([service.addItem(1, 10, 1), service.addItem(1, 10, 1)])
+
+  assert.equal((await service.getBasket(1)).items[0]?.quantity, 3)
 })
 
 test('rejects quantities that exceed stock', async () => {
