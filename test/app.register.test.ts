@@ -5,7 +5,7 @@ import { createApp } from '../src/app';
 import type {
   CustomerRepository,
   NewCustomer,
-} from '../src/repositories/customerRepository';
+} from '../src/models/customerModel';
 
 const validRegistration = {
   customerForename: 'Ada',

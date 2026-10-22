@@ -3,7 +3,7 @@ import { test } from 'vitest';
 import type {
   CustomerRepository,
   NewCustomer,
-} from '../src/repositories/customerRepository';
+} from '../src/models/customerModel';
 import {
   CustomerService,
   RegistrationValidationError,

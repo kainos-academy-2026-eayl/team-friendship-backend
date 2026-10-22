@@ -4,7 +4,7 @@ import type {
   CustomerRecord,
   CustomerRepository,
   NewCustomer,
-} from '../repositories/customerRepository';
+} from '../models/customerModel';
 
 const registerCustomerSchema = z
   .object({

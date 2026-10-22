@@ -1,9 +1,7 @@
 import express, { type Express, type Request, type Response } from 'express';
 import { registerCustomer } from './controllers/customerController';
-import {
-  type CustomerRepository,
-  PrismaCustomerRepository,
-} from './repositories/customerRepository';
+import type { CustomerRepository } from './models/customerModel';
+import { PrismaCustomerRepository } from './repositories/customerRepository';
 
 export function createApp(
   customerRepository: CustomerRepository = new PrismaCustomerRepository(),

@@ -2,7 +2,7 @@ import type { RequestHandler } from 'express';
 import {
   type CustomerRepository,
   DuplicateCustomerEmailError,
-} from '../repositories/customerRepository';
+} from '../models/customerModel';
 import {
   CustomerService,
   RegistrationValidationError,
