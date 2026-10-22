@@ -87,6 +87,57 @@ describe('POST /login', () => {
     });
   });
 
+  test('returns 429 before login when the per-account attempt limit is reached', async () => {
+    let calls = 0;
+    const baseUrl = await startServer(async () => {
+      calls += 1;
+      throw new InvalidCredentialsError();
+    });
+
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const response = await postLogin(baseUrl, {
+        email: 'ada@example.com',
+        password: 'wrong',
+      });
+      expect(response.status).toBe(401);
+    }
+
+    const response = await postLogin(baseUrl, {
+      email: 'ada@example.com',
+      password: 'wrong',
+    });
+
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({
+      error: 'Too many login attempts. Please try again later.',
+    });
+    expect(calls).toBe(5);
+  });
+
+  test('returns 429 before login when the per-client attempt limit is reached', async () => {
+    let calls = 0;
+    const baseUrl = await startServer(async () => {
+      calls += 1;
+      throw new InvalidCredentialsError();
+    });
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      const response = await postLogin(baseUrl, {
+        email: `user${attempt}@example.com`,
+        password: 'wrong',
+      });
+      expect(response.status).toBe(401);
+    }
+
+    const response = await postLogin(baseUrl, {
+      email: 'another@example.com',
+      password: 'wrong',
+    });
+
+    expect(response.status).toBe(429);
+    expect(calls).toBe(20);
+  });
+
   test('returns 400 with field errors when the body is invalid', async () => {
     let called = false;
     const baseUrl = await startServer(async () => {

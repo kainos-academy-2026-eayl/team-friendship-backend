@@ -23,7 +23,51 @@ export const loginSchema = z.object({
 
 type LoginServiceContract = Pick<LoginService, 'login'>;
 
+const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
+const MAX_CLIENT_LOGIN_ATTEMPTS = 20;
+const MAX_ACCOUNT_LOGIN_ATTEMPTS = 5;
+
+type LoginAttemptWindow = {
+  count: number;
+  expiresAt: number;
+};
+
+class LoginAttemptLimiter {
+  private readonly attempts = new Map<string, LoginAttemptWindow>();
+
+  allow(clientIp: string, email: string): boolean {
+    const now = Date.now();
+    for (const [key, window] of this.attempts) {
+      if (window.expiresAt <= now) this.attempts.delete(key);
+    }
+
+    const clientKey = `client:${clientIp}`;
+    const accountKey = `account:${email.toLowerCase()}`;
+    if (
+      (this.attempts.get(clientKey)?.count ?? 0) >= MAX_CLIENT_LOGIN_ATTEMPTS ||
+      (this.attempts.get(accountKey)?.count ?? 0) >= MAX_ACCOUNT_LOGIN_ATTEMPTS
+    ) {
+      return false;
+    }
+
+    for (const key of [clientKey, accountKey]) {
+      const window = this.attempts.get(key);
+      if (window) {
+        window.count += 1;
+      } else {
+        this.attempts.set(key, {
+          count: 1,
+          expiresAt: now + LOGIN_ATTEMPT_WINDOW_MS,
+        });
+      }
+    }
+    return true;
+  }
+}
+
 export class LoginController {
+  private readonly attemptLimiter = new LoginAttemptLimiter();
+
   constructor(private readonly service: LoginServiceContract) {}
 
   login = async (req: Request, res: Response): Promise<void> => {
@@ -32,6 +76,18 @@ export class LoginController {
       res.status(400).json({
         error: 'Invalid login request',
         details: z.flattenError(result.error).fieldErrors,
+      });
+      return;
+    }
+
+    if (
+      !this.attemptLimiter.allow(
+        req.ip ?? req.socket.remoteAddress ?? 'unknown',
+        result.data.email,
+      )
+    ) {
+      res.status(429).json({
+        error: 'Too many login attempts. Please try again later.',
       });
       return;
     }
