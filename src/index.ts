@@ -1,5 +1,8 @@
 import 'dotenv/config'
 import { createApp } from './app'
+import { BasketController } from './controllers/basketController'
+import { BasketRepository } from './repositories/basketRepository'
+import { BasketService } from './services/basketService'
 
 if (!process.env.PORT) {
   throw new Error('PORT environment variable is not set')
@@ -13,10 +16,10 @@ if (!Number.isInteger(PORT) || PORT < 0 || PORT > 65535) {
 }
 
 const app = createApp()
-
-// Register new controllers / middleware here!
-
-// app.use('/', ...)
+const basketRepository = new BasketRepository()
+const basketService = new BasketService(basketRepository)
+const basketController = new BasketController(basketService)
+app.use('/', basketController.router())
 
 // Keep everything below this comment at the bottom of the file
 const server = app.listen(PORT, HOST, () => {
