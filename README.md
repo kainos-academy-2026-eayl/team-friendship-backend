@@ -6,11 +6,11 @@ It gives you a working Express service with TypeScript and a production build al
 
 ## Requirements
 
-| Tool | Version | Notes |
-| --- | --- | --- |
-| [nvm](https://github.com/nvm-sh/nvm) | latest | Required. Manages your Node version per project. |
-| Node.js | 22 | Pinned in [.nvmrc](.nvmrc). Install it with nvm, not with a system installer. |
-| npm | 10+ | Ships with Node 22. |
+| Tool                                 | Version | Notes                                                                         |
+| ------------------------------------ | ------- | ----------------------------------------------------------------------------- |
+| [nvm](https://github.com/nvm-sh/nvm) | latest  | Required. Manages your Node version per project.                              |
+| Node.js                              | 22      | Pinned in [.nvmrc](.nvmrc). Install it with nvm, not with a system installer. |
+| npm                                  | 10+     | Ships with Node 22.                                                           |
 
 Install nvm, then from the repository root run:
 
@@ -48,7 +48,6 @@ Use `npm ci` rather than `npm install`. It installs the exact versions recorded 
 ## Making it your own
 
 After clicking **Use this template** on GitHub and creating your own repository:
-
 1. Clone your new repository and run the quick start steps above.
 2. Update the identity fields in [package.json](package.json):
    - `name` — your service name in kebab-case, e.g. `booking-service`
@@ -63,18 +62,18 @@ Never commit your `.env` file. It is already listed in [.gitignore](.gitignore);
 
 ## Scripts
 
-| Script | Command | What it does |
-| --- | --- | --- |
-| `npm run dev` | `tsx watch src/index.ts` | Runs the service from TypeScript source and restarts on file changes. Use this while developing. |
-| `npm run typecheck` | `tsc` | Checks types without emitting files. |
-| `npm run build` | `tsc` then `esbuild` | Type-checks, then bundles the service into `dist/index.js` for production. |
-| `npm run lint` | `oxlint --deny-warnings src` | Checks TypeScript source; warnings fail the command. |
-| `npm run format` | `prettier --check src` | Checks source formatting without rewriting files; fails on differences. |
-| `npm run format:fix` | `prettier --write src` | Applies the configured source formatting locally. |
-| `npm test` | `vitest run` | Runs tests once with Vitest and exits on completion. |
-| `npm run prepare` | `node .husky/install.mjs` | Installs Git hooks after development dependency installs; skips production, CI, and `HUSKY=0`. |
-| `npm start` | `node dist/index.js` | Runs the built output. Requires `npm run build` first. |
-Before pushing, run `npm run build`, `npm run format`, `npm run lint`, and `npm test`.
+| Script                                                                                 | Command                      | What it does                                                                                     |
+| -------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------ |
+| `npm run dev`                                                                          | `tsx watch src/index.ts`     | Runs the service from TypeScript source and restarts on file changes. Use this while developing. |
+| `npm run typecheck`                                                                    | `tsc`                        | Checks types without emitting files.                                                             |
+| `npm run build`                                                                        | `tsc` then `esbuild`         | Type-checks, then bundles the service into `dist/index.js` for production.                       |
+| `npm run lint`                                                                         | `oxlint --deny-warnings src` | Checks TypeScript source; warnings fail the command.                                             |
+| `npm run format`                                                                       | `prettier --check src`       | Checks source formatting without rewriting files; fails on differences.                          |
+| `npm run format:fix`                                                                   | `prettier --write src`       | Applies the configured source formatting locally.                                                |
+| `npm test`                                                                             | `vitest run`                 | Runs tests once with Vitest and exits on completion.                                             |
+| `npm run prepare`                                                                      | `node .husky/install.mjs`    | Installs Git hooks after development dependency installs; skips production, CI, and `HUSKY=0`.   |
+| `npm start`                                                                            | `node dist/index.js`         | Runs the built output. Requires `npm run build` first.                                           |
+| Before pushing, run `npm run build`, `npm run format`, `npm run lint`, and `npm test`. |
 
 Husky runs build, lint, and tests before each commit. If any command fails, the
 commit stops. GitHub Actions runs the same checks independently because local
@@ -91,18 +90,17 @@ formatting, lint, and tests in order. Any failure fails the job; later steps do 
 
 The workflow alone does not block merging. An administrator must configure
 the following in **both the backend and frontend GitHub repositories**:
-
 1. Push the workflow branch and open a pull request so GitHub records the
-  **Build, lint and test** check.
+   **Build, lint and test** check.
 2. In **Settings > Branches**, add or edit a branch protection rule for `main`.
-  Repeat for `master` if that branch exists or is used.
+   Repeat for `master` if that branch exists or is used.
 3. Enable **Require a pull request before merging** and **Require status checks
   to pass before merging**. Select **Build, lint and test** from GitHub Actions.
 4. Enable **Require branches to be up to date before merging** and **Do not allow
   bypassing the above settings**, including administrators. Do not allow force
-  pushes or branch deletion. Save the rule.
+   pushes or branch deletion. Save the rule.
 5. Verify that a pull request with a failing check cannot merge, then fix the
-  failure and confirm that the check passes.
+   failure and confirm that the check passes.
 
 These repository settings must be applied on GitHub; committing YAML cannot
 enable branch protection. A failure after merge cannot undo that merge, which
@@ -139,22 +137,22 @@ Say you want a `GET /bookings` endpoint.
 **1. Create the router** in `src/controllers/bookings.ts`:
 
 ```ts
-import { Router, type Request, type Response } from 'express'
+import { Router, type Request, type Response } from 'express';
 
-export const bookingsRouter = Router()
+export const bookingsRouter = Router();
 
 bookingsRouter.get('/', (_req: Request, res: Response) => {
-  res.json({ bookings: [] })
-})
+  res.json({ bookings: [] });
+});
 ```
 
 **2. Register it** in [src/app.ts](src/app.ts):
 
 ```ts
-import { bookingsRouter } from './controllers/bookings'
+import { bookingsRouter } from './controllers/bookings';
 
 // inside createApp(), before `return app`
-app.use('/bookings', bookingsRouter)
+app.use('/bookings', bookingsRouter);
 ```
 
 Imports do not need a `.js` extension — this project is configured for bundler-style module resolution.
@@ -172,9 +170,9 @@ If your route reads a JSON request body, add `app.use(express.json({ limit: '100
 
 Environment variables are loaded from `.env` by [dotenv](https://github.com/motdotla/dotenv) at startup.
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `PORT` | yes | Port the service listens on. The service exits at startup if it is missing or invalid. |
+| Variable | Required | Description                                                                            |
+| -------- | -------- | -------------------------------------------------------------------------------------- |
+| `PORT`   | yes      | Port the service listens on. The service exits at startup if it is missing or invalid. |
 
 The server binds to `0.0.0.0` so it is reachable from outside a container. Add new variables to both your `.env` and [.env.example](.env.example).
 
