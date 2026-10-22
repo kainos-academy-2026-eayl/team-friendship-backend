@@ -4,6 +4,7 @@ import {
   type Response,
   Router,
 } from 'express';
+import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import {
   InvalidCredentialsError,
@@ -37,16 +38,16 @@ class LoginAttemptLimiter {
   private readonly attempts = new Map<string, AttemptWindow>();
   private requestsSinceCleanup = 0;
 
-  isLimited(clientIp: string, email: string): boolean {
+  isLimited(email: string): boolean {
     const now = Date.now();
-    const clientKey = `client:${clientIp}`;
     const accountKey = `account:${email.toLowerCase()}`;
-    const limited =
-      this.hasReachedLimit(clientKey, now, MAX_CLIENT_LOGIN_ATTEMPTS) ||
-      this.hasReachedLimit(accountKey, now, MAX_ACCOUNT_LOGIN_ATTEMPTS);
+    const limited = this.hasReachedLimit(
+      accountKey,
+      now,
+      MAX_ACCOUNT_LOGIN_ATTEMPTS,
+    );
 
     if (!limited) {
-      this.recordAttempt(clientKey, now);
       this.recordAttempt(accountKey, now);
     }
 
@@ -89,6 +90,17 @@ class LoginAttemptLimiter {
 
 export class LoginController {
   private readonly attemptLimiter = new LoginAttemptLimiter();
+  private readonly clientRateLimiter = rateLimit({
+    windowMs: LOGIN_ATTEMPT_WINDOW_MS,
+    limit: MAX_CLIENT_LOGIN_ATTEMPTS,
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (_req, res) => {
+      res.status(429).json({
+        error: 'Too many login attempts. Please try again later.',
+      });
+    },
+  });
 
   constructor(private readonly service: LoginServiceContract) {}
 
@@ -102,12 +114,7 @@ export class LoginController {
       return;
     }
 
-    if (
-      this.attemptLimiter.isLimited(
-        req.ip ?? req.socket.remoteAddress ?? 'unknown',
-        result.data.email,
-      )
-    ) {
+    if (this.attemptLimiter.isLimited(result.data.email)) {
       res.status(429).json({
         error: 'Too many login attempts. Please try again later.',
       });
@@ -124,7 +131,7 @@ export class LoginController {
   router(): Router {
     const router = Router();
 
-    router.post('/login', this.login);
+    router.post('/login', this.clientRateLimiter, this.login);
 
     // Express 5 forwards rejected promises from async handlers to this error handler.
     router.use(
