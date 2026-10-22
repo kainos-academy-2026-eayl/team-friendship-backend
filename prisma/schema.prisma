@@ -21,25 +21,5 @@ model Customer {
     customerEmail    String
     customerPhone    String
     customerPassword String
-    baskets          Basket[]
   }
-
-model Product {
-  productID          Int      @id @default(autoincrement())
-  productName        String
-  productDescription String
-  productPrice       Float
-  productStock       Int
-  baskets            Basket[]
-}
-
-model Basket {
-  customerID Int
-  productID  Int
-  quantity   Int
-  customer   Customer @relation(fields: [customerID], references: [customerID])
-  product    Product  @relation(fields: [productID], references: [productID])
-
-  @@id([customerID, productID])
-}
  
