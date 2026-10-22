@@ -165,4 +165,25 @@ describe('LoginService.login attempt limits', () => {
       service.login('ada@example.com', PASSWORD, CLIENT),
     ).resolves.toMatchObject({ customerID: 1 });
   });
+
+  test('does not refund a client attempt from an expired window', () => {
+    let now = 0;
+    const limiter = new LoginAttemptLimiter(5, 1000, () => now);
+    const originalAttempt = limiter.consume(['client']);
+    expect(originalAttempt.allowed).toBe(true);
+    if (!originalAttempt.allowed) return;
+
+    now = 1000;
+    for (let i = 0; i < 5; i++) {
+      const attempt = limiter.consume(['client']);
+      expect(attempt.allowed).toBe(true);
+    }
+
+    limiter.refund('client', originalAttempt.reservation);
+
+    expect(limiter.consume(['client'])).toMatchObject({
+      allowed: false,
+      retryAfterSeconds: 1,
+    });
+  });
 });

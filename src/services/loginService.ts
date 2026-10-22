@@ -70,7 +70,7 @@ export class LoginService {
 
     // Successful logins don't count towards either limit.
     this.limiter.reset(accountKey);
-    this.limiter.refund(clientKey);
+    this.limiter.refund(clientKey, check.reservation);
 
     const { customerPassword: _customerPassword, ...details } = customer;
     return details;

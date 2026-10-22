@@ -53,6 +53,10 @@ export class LoginController {
     // Express 5 forwards rejected promises from async handlers to this error handler.
     router.use(
       (error: unknown, _req: Request, res: Response, next: NextFunction) => {
+        if (res.headersSent) {
+          next(error);
+          return;
+        }
         if (error instanceof InvalidCredentialsError) {
           res.status(401).json({ error: error.message });
           return;
@@ -64,7 +68,8 @@ export class LoginController {
             .json({ error: error.message });
           return;
         }
-        next(error);
+        console.error('Unexpected login error', error);
+        res.status(500).json({ error: 'Internal server error' });
       },
     );
 

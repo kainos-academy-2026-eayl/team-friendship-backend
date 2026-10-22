@@ -1,6 +1,6 @@
 import { once } from 'node:events';
 import type { AddressInfo } from 'node:net';
-import { describe, expect, onTestFinished, test } from 'vitest';
+import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { createApp } from '../../src/app';
 import { LoginController } from '../../src/controllers/loginController';
 import {
@@ -108,6 +108,25 @@ describe('POST /login', () => {
     expect(await response.json()).toEqual({
       error: TOO_MANY_ATTEMPTS_MESSAGE,
     });
+  });
+
+  test('returns a generic JSON error for unexpected service failures', async () => {
+    const error = new Error('Database connection details');
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
+    onTestFinished(() => log.mockRestore());
+    const baseUrl = await startServer(async () => {
+      throw error;
+    });
+
+    const response = await postLogin(baseUrl, {
+      email: 'ada@example.com',
+      password: 'Password123!',
+    });
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get('content-type')).toMatch(/application\/json/);
+    expect(await response.json()).toEqual({ error: 'Internal server error' });
+    expect(log).toHaveBeenCalledWith('Unexpected login error', error);
   });
 
   test('returns 400 with field errors when the body is invalid', async () => {

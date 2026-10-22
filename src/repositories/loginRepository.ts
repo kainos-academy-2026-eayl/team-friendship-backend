@@ -3,9 +3,13 @@ import type { Customer, PrismaClient } from '../generated/prisma/client';
 export class LoginRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  findCustomerByEmail(email: string): Promise<Customer | null> {
-    return this.prisma.customer.findFirst({
-      where: { customerEmail: { equals: email, mode: 'insensitive' } },
-    });
+  async findCustomerByEmail(email: string): Promise<Customer | null> {
+    const [customer] = await this.prisma.$queryRaw<Customer[]>`
+      SELECT *
+      FROM "Customer"
+      WHERE lower("customerEmail") = lower(${email})
+      LIMIT 1
+    `;
+    return customer ?? null;
   }
 }

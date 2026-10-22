@@ -3,12 +3,18 @@ export const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 
 type AttemptRecord = { count: number; resetAt: number };
 
+export type AttemptReservation = object;
+
 export type AttemptCheck =
-  | { allowed: true }
+  | { allowed: true; reservation: AttemptReservation }
   | { allowed: false; retryAfterSeconds: number };
 
 export class LoginAttemptLimiter {
   private readonly attempts = new Map<string, AttemptRecord>();
+  private readonly reservations = new WeakMap<
+    AttemptReservation,
+    ReadonlyMap<string, AttemptRecord>
+  >();
   private lastSweep = 0;
 
   constructor(
@@ -39,21 +45,27 @@ export class LoginAttemptLimiter {
       };
     }
 
+    const records = new Map<string, AttemptRecord>();
     for (const key of keys) {
       const record = this.activeRecord(key, now);
       if (record) {
         record.count += 1;
+        records.set(key, record);
       } else {
-        this.attempts.set(key, { count: 1, resetAt: now + this.windowMs });
+        const newRecord = { count: 1, resetAt: now + this.windowMs };
+        this.attempts.set(key, newRecord);
+        records.set(key, newRecord);
       }
     }
-    return { allowed: true };
+    const reservation = {};
+    this.reservations.set(reservation, records);
+    return { allowed: true, reservation };
   }
 
   /** Gives back one attempt, e.g. after a successful login. */
-  refund(key: string): void {
-    const record = this.activeRecord(key, this.now());
-    if (!record) return;
+  refund(key: string, reservation: AttemptReservation): void {
+    const record = this.reservations.get(reservation)?.get(key);
+    if (!record || this.activeRecord(key, this.now()) !== record) return;
     record.count -= 1;
     if (record.count <= 0) this.attempts.delete(key);
   }
