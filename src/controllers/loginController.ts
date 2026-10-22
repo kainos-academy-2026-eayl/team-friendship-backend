@@ -26,42 +26,64 @@ type LoginServiceContract = Pick<LoginService, 'login'>;
 const LOGIN_ATTEMPT_WINDOW_MS = 15 * 60 * 1000;
 const MAX_CLIENT_LOGIN_ATTEMPTS = 20;
 const MAX_ACCOUNT_LOGIN_ATTEMPTS = 5;
+const ATTEMPT_CLEANUP_INTERVAL = 128;
 
-type LoginAttemptWindow = {
+type AttemptWindow = {
   count: number;
-  expiresAt: number;
+  resetAt: number;
 };
 
 class LoginAttemptLimiter {
-  private readonly attempts = new Map<string, LoginAttemptWindow>();
+  private readonly attempts = new Map<string, AttemptWindow>();
+  private requestsSinceCleanup = 0;
 
-  allow(clientIp: string, email: string): boolean {
+  isLimited(clientIp: string, email: string): boolean {
     const now = Date.now();
-    for (const [key, window] of this.attempts) {
-      if (window.expiresAt <= now) this.attempts.delete(key);
-    }
-
     const clientKey = `client:${clientIp}`;
     const accountKey = `account:${email.toLowerCase()}`;
-    if (
-      (this.attempts.get(clientKey)?.count ?? 0) >= MAX_CLIENT_LOGIN_ATTEMPTS ||
-      (this.attempts.get(accountKey)?.count ?? 0) >= MAX_ACCOUNT_LOGIN_ATTEMPTS
-    ) {
-      return false;
+    const limited =
+      this.hasReachedLimit(clientKey, now, MAX_CLIENT_LOGIN_ATTEMPTS) ||
+      this.hasReachedLimit(accountKey, now, MAX_ACCOUNT_LOGIN_ATTEMPTS);
+
+    if (!limited) {
+      this.recordAttempt(clientKey, now);
+      this.recordAttempt(accountKey, now);
     }
 
-    for (const key of [clientKey, accountKey]) {
-      const window = this.attempts.get(key);
-      if (window) {
-        window.count += 1;
-      } else {
-        this.attempts.set(key, {
-          count: 1,
-          expiresAt: now + LOGIN_ATTEMPT_WINDOW_MS,
-        });
+    this.requestsSinceCleanup += 1;
+    if (this.requestsSinceCleanup >= ATTEMPT_CLEANUP_INTERVAL) {
+      this.removeExpiredAttempts(now);
+      this.requestsSinceCleanup = 0;
+    }
+
+    return limited;
+  }
+
+  private hasReachedLimit(key: string, now: number, limit: number): boolean {
+    const window = this.attempts.get(key);
+    return (
+      window !== undefined && window.resetAt > now && window.count >= limit
+    );
+  }
+
+  private recordAttempt(key: string, now: number): void {
+    const window = this.attempts.get(key);
+    if (!window || window.resetAt <= now) {
+      this.attempts.set(key, {
+        count: 1,
+        resetAt: now + LOGIN_ATTEMPT_WINDOW_MS,
+      });
+      return;
+    }
+    window.count += 1;
+  }
+
+  private removeExpiredAttempts(now: number): void {
+    for (const [key, window] of this.attempts) {
+      if (window.resetAt <= now) {
+        this.attempts.delete(key);
       }
     }
-    return true;
   }
 }
 
@@ -81,7 +103,7 @@ export class LoginController {
     }
 
     if (
-      !this.attemptLimiter.allow(
+      this.attemptLimiter.isLimited(
         req.ip ?? req.socket.remoteAddress ?? 'unknown',
         result.data.email,
       )

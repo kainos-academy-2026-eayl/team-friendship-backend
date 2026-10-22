@@ -21,8 +21,12 @@ const customer: CustomerDetails = {
 
 async function startServer(
   login: (email: string, password: string) => Promise<CustomerDetails>,
+  trustProxy = false,
 ) {
   const app = createApp();
+  if (trustProxy) {
+    app.set('trust proxy', true);
+  }
   app.use('/', new LoginController({ login }).router());
   const server = app.listen(0, '127.0.0.1');
   onTestFinished(
@@ -36,12 +40,13 @@ async function startServer(
   return `http://127.0.0.1:${port}`;
 }
 
-function postLogin(baseUrl: string, body: unknown) {
+function postLogin(baseUrl: string, body: unknown, forwardedFor?: string) {
   return fetch(`${baseUrl}/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Origin: 'http://localhost:8000',
+      ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {}),
     },
     body: JSON.stringify(body),
   });
@@ -170,5 +175,31 @@ describe('POST /login', () => {
     };
     expect(body.details.email).toEqual(['Email is required']);
     expect(body.details.password).toEqual(['Password is required']);
+  });
+
+  test('limits attempts for the same account across different clients', async () => {
+    let calls = 0;
+    const baseUrl = await startServer(async () => {
+      calls += 1;
+      return customer;
+    }, true);
+
+    for (let attempt = 1; attempt <= 5; attempt += 1) {
+      const response = await postLogin(
+        baseUrl,
+        { email: 'ada@example.com', password: 'Password123!' },
+        `192.0.2.${attempt}`,
+      );
+      expect(response.status).toBe(200);
+    }
+
+    const response = await postLogin(
+      baseUrl,
+      { email: 'ada@example.com', password: 'Password123!' },
+      '192.0.2.6',
+    );
+
+    expect(response.status).toBe(429);
+    expect(calls).toBe(5);
   });
 });
