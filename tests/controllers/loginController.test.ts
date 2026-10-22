@@ -7,6 +7,8 @@ import {
   type CustomerDetails,
   INVALID_CREDENTIALS_MESSAGE,
   InvalidCredentialsError,
+  TOO_MANY_ATTEMPTS_MESSAGE,
+  TooManyAttemptsError,
 } from '../../src/services/loginService';
 
 const customer: CustomerDetails = {
@@ -20,7 +22,11 @@ const customer: CustomerDetails = {
 };
 
 async function startServer(
-  login: (email: string, password: string) => Promise<CustomerDetails>,
+  login: (
+    email: string,
+    password: string,
+    clientId: string,
+  ) => Promise<CustomerDetails>,
 ) {
   const app = createApp();
   app.use('/', new LoginController({ login }).router());
@@ -49,9 +55,9 @@ function postLogin(baseUrl: string, body: unknown) {
 
 describe('POST /login', () => {
   test('returns 200 and customer details for valid credentials', async () => {
-    const calls: [string, string][] = [];
-    const baseUrl = await startServer(async (email, password) => {
-      calls.push([email, password]);
+    const calls: [string, string, string][] = [];
+    const baseUrl = await startServer(async (email, password, clientId) => {
+      calls.push([email, password, clientId]);
       return customer;
     });
 
@@ -68,7 +74,7 @@ describe('POST /login', () => {
       message: 'Login successful',
       customer,
     });
-    expect(calls).toEqual([['ada@example.com', 'Password123!']]);
+    expect(calls).toEqual([['ada@example.com', 'Password123!', '127.0.0.1']]);
   });
 
   test('returns 401 with a generic message for invalid credentials', async () => {
@@ -84,6 +90,23 @@ describe('POST /login', () => {
     expect(response.status).toBe(401);
     expect(await response.json()).toEqual({
       error: INVALID_CREDENTIALS_MESSAGE,
+    });
+  });
+
+  test('returns 429 with Retry-After when attempts are exceeded', async () => {
+    const baseUrl = await startServer(async () => {
+      throw new TooManyAttemptsError(120);
+    });
+
+    const response = await postLogin(baseUrl, {
+      email: 'ada@example.com',
+      password: 'Password123!',
+    });
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get('retry-after')).toBe('120');
+    expect(await response.json()).toEqual({
+      error: TOO_MANY_ATTEMPTS_MESSAGE,
     });
   });
 

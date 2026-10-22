@@ -8,6 +8,7 @@ import { z } from 'zod';
 import {
   InvalidCredentialsError,
   type LoginService,
+  TooManyAttemptsError,
 } from '../services/loginService';
 
 export const loginSchema = z.object({
@@ -39,6 +40,7 @@ export class LoginController {
     const customer = await this.service.login(
       result.data.email,
       result.data.password,
+      req.ip ?? req.socket.remoteAddress ?? 'unknown',
     );
     res.status(200).json({ message: 'Login successful', customer });
   };
@@ -53,6 +55,13 @@ export class LoginController {
       (error: unknown, _req: Request, res: Response, next: NextFunction) => {
         if (error instanceof InvalidCredentialsError) {
           res.status(401).json({ error: error.message });
+          return;
+        }
+        if (error instanceof TooManyAttemptsError) {
+          res
+            .status(429)
+            .set('Retry-After', String(error.retryAfterSeconds))
+            .json({ error: error.message });
           return;
         }
         next(error);

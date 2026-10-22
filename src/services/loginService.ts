@@ -1,6 +1,7 @@
 import argon2 from 'argon2';
 import type { Customer } from '../generated/prisma/client';
 import type { LoginRepository } from '../repositories/loginRepository';
+import { LoginAttemptLimiter } from './loginAttemptLimiter';
 
 export type CustomerDetails = Omit<Customer, 'customerPassword'>;
 
@@ -10,6 +11,16 @@ export class InvalidCredentialsError extends Error {
   constructor() {
     super(INVALID_CREDENTIALS_MESSAGE);
     this.name = 'InvalidCredentialsError';
+  }
+}
+
+export const TOO_MANY_ATTEMPTS_MESSAGE =
+  'Too many login attempts. Please try again later.';
+
+export class TooManyAttemptsError extends Error {
+  constructor(readonly retryAfterSeconds: number) {
+    super(TOO_MANY_ATTEMPTS_MESSAGE);
+    this.name = 'TooManyAttemptsError';
   }
 }
 
@@ -28,9 +39,24 @@ async function verifyPassword(hash: string, password: string) {
 }
 
 export class LoginService {
-  constructor(private readonly repository: LoginRepositoryContract) {}
+  constructor(
+    private readonly repository: LoginRepositoryContract,
+    private readonly limiter = new LoginAttemptLimiter(),
+  ) {}
 
-  async login(email: string, password: string): Promise<CustomerDetails> {
+  async login(
+    email: string,
+    password: string,
+    clientId: string,
+  ): Promise<CustomerDetails> {
+    const clientKey = `client:${clientId}`;
+    const accountKey = `account:${email.toLowerCase()}`;
+
+    const check = this.limiter.consume([clientKey, accountKey]);
+    if (!check.allowed) {
+      throw new TooManyAttemptsError(check.retryAfterSeconds);
+    }
+
     const customer = await this.repository.findCustomerByEmail(email);
 
     if (!customer) {
@@ -41,6 +67,10 @@ export class LoginService {
     if (!(await verifyPassword(customer.customerPassword, password))) {
       throw new InvalidCredentialsError();
     }
+
+    // Successful logins don't count towards either limit.
+    this.limiter.reset(accountKey);
+    this.limiter.refund(clientKey);
 
     const { customerPassword: _customerPassword, ...details } = customer;
     return details;
