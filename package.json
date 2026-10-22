@@ -12,7 +12,7 @@
     "format:fix": "prettier --write src",
     "test": "vitest run",
     "prepare": "node .husky/install.mjs",
-    "typecheck": "prisma generate && tsc",
+    "typecheck": "tsc",
     "start": "node dist/index.js"
   },
   "keywords": [],
@@ -31,7 +31,6 @@
     "vitest": "^5.0.5"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "^7.10.1",
     "dotenv": "17.4.2",
     "express": "5.2.1"
