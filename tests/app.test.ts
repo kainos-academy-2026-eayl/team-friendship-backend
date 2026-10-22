@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { onTestFinished, test } from 'vitest';
-import { createApp } from './app';
+import { createApp } from '../src/app';
 
 test('GET /health returns service status and uptime', async () => {
   const server = createApp().listen(0, '127.0.0.1');
