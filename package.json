@@ -10,6 +10,7 @@
     "lint": "biome check --error-on-warnings .",
     "lint:fix": "biome check --write --error-on-warnings .",
     "lint:unsafe": "biome check --write --error-on-warnings --unsafe .",
+    "prisma:generate": "prisma generate",
     "test": "vitest run",
     "prepare": "node .husky/install.mjs",
     "predev": "prisma generate",
@@ -39,6 +40,7 @@
     "cors": "^2.8.6",
     "dotenv": "17.4.2",
     "express": "5.2.1",
+    "pg": "^8.23.1",
     "zod": "^4.6.7"
   },
   "allowScripts": {
