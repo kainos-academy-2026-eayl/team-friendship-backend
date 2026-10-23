@@ -3,11 +3,11 @@ import { test } from 'vitest';
 import type {
   CustomerRepository,
   NewCustomer,
-} from '../src/models/customerModel';
+} from '../../src/models/customerModel';
 import {
   CustomerService,
   RegistrationValidationError,
-} from '../src/services/customerService';
+} from '../../src/services/customerService';
 
 const validRegistration = {
   customerForename: 'Ada',
