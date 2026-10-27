@@ -17,7 +17,7 @@ export interface CustomerRepository {
 
 export class DuplicateCustomerEmailError extends Error {
   constructor() {
-    super('An account with this username already exists.');
+    super('An account with this email already exists.');
     this.name = 'DuplicateCustomerEmailError';
   }
 }

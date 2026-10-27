@@ -12,7 +12,7 @@ const validRegistration = {
   customerSurname: 'Lovelace',
   address: '12 Analytical Engine Way',
   postcode: 'N1 1AA',
-  username: 'ada@example.com',
+  customerEmail: 'ada@example.com',
   customerPhone: '01234567890',
   password: 'a secure password',
   confirmPassword: 'a secure password',
@@ -64,7 +64,7 @@ test('POST /register creates an account without returning its password', async (
 
   assert.equal(response.status, 201);
   assert.equal(created.length, 1);
-  assert.equal(created[0]?.customerEmail, validRegistration.username);
+  assert.equal(created[0]?.customerEmail, validRegistration.customerEmail);
   assert.notEqual(created[0]?.customerPassword, validRegistration.password);
   assert.deepEqual(response.body, {
     message: 'Account created successfully.',
@@ -80,19 +80,16 @@ test('POST /register creates an account without returning its password', async (
   });
 });
 
-test('POST /register rejects usernames shorter than three characters', async () => {
+test('POST /register rejects invalid emails', async () => {
   const { repository, created } = createRepository();
 
   const response = await postRegistration(repository, {
     ...validRegistration,
-    username: 'ab',
+    customerEmail: 'ab',
   });
 
   assert.equal(response.status, 400);
-  assert.equal(
-    response.body.message,
-    'Username must be at least 3 characters.',
-  );
+  assert.equal(response.body.message, 'Enter a valid email address.');
   assert.equal(created.length, 0);
 });
 
