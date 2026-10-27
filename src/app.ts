@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express, { type Express, type Request, type Response } from 'express';
 import { registerCustomer } from './controllers/customerController';
+import { forgotPassword } from './controllers/forgotPasswordController';
 import type { CustomerRepository } from './models/customerModel';
 import { PrismaCustomerRepository } from './repositories/customerRepository';
 
@@ -21,6 +22,7 @@ export function createApp(
   });
 
   app.post('/register', registerCustomer(customerRepository));
+  app.post('/forgot-password', forgotPassword);
 
   return app;
 }
