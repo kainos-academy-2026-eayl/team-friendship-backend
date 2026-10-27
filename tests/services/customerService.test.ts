@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import argon2 from 'argon2';
 import { test } from 'vitest';
 import type {
   CustomerRepository,
@@ -14,7 +15,7 @@ const validRegistration = {
   customerSurname: 'Lovelace',
   address: '12 Analytical Engine Way',
   postcode: 'N1 1AA',
-  username: 'ada@example.com',
+  customerEmail: 'ada@example.com',
   customerPhone: '01234567890',
   password: 'a secure password',
   confirmPassword: 'a secure password',
@@ -32,29 +33,28 @@ function createService() {
   return { service: new CustomerService(repository), created };
 }
 
-test('register maps username to email, hashes the password, and omits it from the result', async () => {
+test('register hashes the password with argon2 and omits it from the result', async () => {
   const { service, created } = createService();
 
   const customer = await service.register(validRegistration);
 
-  assert.equal(customer.customerEmail, validRegistration.username);
+  assert.equal(customer.customerEmail, validRegistration.customerEmail);
   assert.equal(created.length, 1);
-  assert.notEqual(created[0]?.customerPassword, validRegistration.password);
-  assert.match(
-    created[0]?.customerPassword ?? '',
-    /^[a-f\d]{32}:[a-f\d]{128}$/,
-  );
+  const storedHash = created[0]?.customerPassword ?? '';
+  assert.notEqual(storedHash, validRegistration.password);
+  assert.match(storedHash, /^\$argon2id\$/);
+  assert.ok(await argon2.verify(storedHash, validRegistration.password));
   assert.equal('customerPassword' in customer, false);
 });
 
-test('register rejects a username shorter than three characters with the Zod message', async () => {
+test('register rejects an invalid email with the Zod message', async () => {
   const { service, created } = createService();
 
   await assert.rejects(
-    service.register({ ...validRegistration, username: 'ab' }),
+    service.register({ ...validRegistration, customerEmail: 'ab' }),
     (error: unknown) => {
       assert.ok(error instanceof RegistrationValidationError);
-      assert.equal(error.message, 'Username must be at least 3 characters.');
+      assert.equal(error.message, 'Enter a valid email address.');
       return true;
     },
   );
