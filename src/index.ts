@@ -44,11 +44,7 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 
 dotenv.config();
 
-console.log('Sending test email...');
-
 sendEmail({
   subject: 'Hello from TypeScript',
   text: 'Hello world!',
 });
-
-console.log('Test email sent!');
