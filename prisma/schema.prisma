@@ -13,13 +13,21 @@ datasource db {
 }
 
 model Customer {
-    customerID       Int    @id @default(autoincrement())
-    customerForename String
-    customerSurname  String
-    address          String
-    postcode         String
-    customerEmail    String @unique
-    customerPhone    String
-    customerPassword String
-  }
- 
+  customerID       Int    @id @default(autoincrement())
+  customerForename String
+  customerSurname  String
+  address          String
+  postcode         String
+  customerEmail    String @unique
+  customerPhone    String
+  customerPassword String
+}
+
+model Product {
+  productID          Int    @id @default(autoincrement())
+  productName        String
+  productDescription String
+  productPrice       Float
+  productImage       String
+  productStock       Int
+}
