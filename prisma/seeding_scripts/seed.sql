@@ -21,3 +21,22 @@ VALUES
     ('Lego', 'Singular lego', 0.38, 'products_images/lego.jpeg', 40),
     ('Barbie', 'Classic doll for imaginative play', 15.00, 'products_images/barbie.jpeg', 12),
     ('David', 'Batteries not included', 0.39, 'products_images/david.jpeg', 60);
+
+DELETE FROM "Customer";
+
+INSERT INTO "Customer"(
+    "customerID",
+    "customerForename",
+    "customerSurname",
+    "address",
+    "postcode",
+    "customerEmail",
+    "customerPhone",
+    "customerPassword"
+)
+VALUES
+    ('1', 'John', 'Doe', '123 Town Street', 'BT16 AAA', 'johndoe@example.com', '0123456789', 'GreatPassword123!'),
+    ('2', 'Jane', 'Doe', '321 Up Street', 'BT16 AAA', 'janedoe@example.com', '0987654321', 'SecurePassw0rd456@'),
+    ('3', 'Alice', 'Smith', '456 Down Street', 'BT16 BBB', 'alicesmith@example.com', '0112233445', 'Password789!'),
+    ('4', 'Bob', 'Johnson', '789 Left Street', 'BT16 CCC', 'bobjohnson@example.com', '0223344556', 'MySecurePass123$'),
+    ('5', 'Greg', 'Heffley', '88 Burger Town', 'BT12 ABC', 'gregheffley@example.com', '0334455667', 'LegitPassw0rd123!');
