@@ -35,8 +35,8 @@ INSERT INTO "Customer"(
     "customerPassword"
 )
 VALUES
-    ('John', 'Doe', '123 Town Street', 'BT16 AAA', 'johndoe@example.com', '0123456789', 'GreatPassword123!'),
-    ('Jane', 'Doe', '321 Up Street', 'BT16 AAA', 'janedoe@example.com', '0987654321', 'SecurePassw0rd456@'),
-    ('Alice', 'Smith', '456 Down Street', 'BT16 BBB', 'alicesmith@example.com', '0112233445', 'Password789!'),
-    ('Bob', 'Johnson', '789 Left Street', 'BT16 CCC', 'bobjohnson@example.com', '0223344556', 'MySecurePass123$'),
-    ('Greg', 'Heffley', '88 Burger Town', 'BT12 ABC', 'gregheffley@example.com', '0334455667', 'LegitPassw0rd123!');
+    ('John', 'Doe', '123 Town Street', 'BT16 AAA', 'johndoe@example.com', '0123456789', '$argon2id$v=19$m=19456,t=2,p=1$9m2tL3aA3YFY40bcUL+F5A$WwFh9L2R5fVcqBhP5bz/20GCSj4buvJhWR1uyeSuWP0'),
+    ('Jane', 'Doe', '321 Up Street', 'BT16 AAA', 'janedoe@example.com', '0987654321', '$argon2id$v=19$m=19456,t=2,p=1$hR/cmqIM9eD/I5qOx0HNOA$cQVPjoq+5UNQgnPyWbxSBBenzTDSfdSVwfpYOFS63cA'),
+    ('Alice', 'Smith', '456 Down Street', 'BT16 BBB', 'alicesmith@example.com', '0112233445', '$argon2id$v=19$m=19456,t=2,p=1$ymunqbuaaQNwQdoplFjX1w$c0vBdUnp96Ewf+jPRHb9Pf5Fj4XIZlMtH9GGSQ0eerw'),
+    ('Bob', 'Johnson', '789 Left Street', 'BT16 CCC', 'bobjohnson@example.com', '0223344556', '$argon2id$v=19$m=19456,t=2,p=1$h/4V3vXvm0ribX0Au9zjiw$r5JPK/5fQSAmxAwkAbKODohX8RYEtAV8NPIeZmDZOtI'),
+    ('Greg', 'Heffley', '88 Burger Town', 'BT12 ABC', 'gregheffley@example.com', '0334455667', '$argon2id$v=19$m=19456,t=2,p=1$w1mKkfMCvhaJAn4JJO524w$QXcWumehXC1V5If+MnOFeVXgvRU/nnOGUTmqR35EKwo');
