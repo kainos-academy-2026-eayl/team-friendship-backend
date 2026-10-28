@@ -1,8 +1,10 @@
 import 'dotenv/config';
+import dotenv from 'dotenv';
 import { createApp } from './app';
 import { LoginController } from './controllers/loginController';
 import { createPrismaClient } from './db/prisma';
 import { LoginRepository } from './repositories/loginRepository';
+import { sendEmail } from './services/emailService';
 import { LoginService } from './services/loginService';
 
 if (!process.env.PORT) {
@@ -37,3 +39,16 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
     server.close(() => process.exit(0));
   });
 }
+
+//using the sendEmail function to send an email
+
+dotenv.config();
+
+console.log('Sending test email...');
+
+sendEmail({
+  subject: 'Hello from TypeScript',
+  text: 'Hello world!',
+});
+
+console.log('Test email sent!');
