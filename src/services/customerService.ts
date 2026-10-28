@@ -1,4 +1,4 @@
-import { randomBytes, scrypt as scryptCallback } from 'node:crypto';
+import argon2 from 'argon2';
 import { z } from 'zod';
 import type {
   CustomerRecord,
@@ -12,12 +12,16 @@ const registerCustomerSchema = z
     customerSurname: z.string().trim().min(1, 'Surname is required.'),
     address: z.string().trim().min(1, 'Address is required.'),
     postcode: z.string().trim().min(1, 'Postcode is required.'),
-    username: z
+    customerEmail: z
       .string()
-      .min(3, 'Username must be at least 3 characters.')
-      .email('Enter a valid email address.'),
+      .trim()
+      .pipe(z.email('Enter a valid email address.')),
     customerPhone: z.string().trim().min(1, 'Phone number is required.'),
-    password: z.string().min(1, 'Password is required.'),
+    // Login rejects passwords over 128 characters, so registration must too.
+    password: z
+      .string()
+      .min(1, 'Password is required.')
+      .max(128, 'Password must be 128 characters or fewer.'),
     confirmPassword: z.string().min(1, 'Password confirmation is required.'),
   })
   .superRefine((customer, context) => {
@@ -37,21 +41,6 @@ export class RegistrationValidationError extends Error {
   }
 }
 
-function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString('hex');
-
-  return new Promise((resolve, reject) => {
-    scryptCallback(password, salt, 64, (error, key) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      resolve(`${salt}:${key.toString('hex')}`);
-    });
-  });
-}
-
 function withoutPassword(customer: CustomerRecord) {
   const { customerPassword: _customerPassword, ...publicCustomer } = customer;
   return publicCustomer;
@@ -69,15 +58,13 @@ export class CustomerService {
     }
 
     const {
-      username,
       password,
       confirmPassword: _confirmPassword,
       ...customerDetails
     } = result.data;
     const customer: NewCustomer = {
       ...customerDetails,
-      customerEmail: username,
-      customerPassword: await hashPassword(password),
+      customerPassword: await argon2.hash(password),
     };
 
     return withoutPassword(await this.customerRepository.create(customer));
