@@ -7,7 +7,7 @@ export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: {
     path: 'prisma/migrations',
-    seed: 'psql -U dev -d app_dev -f prisma/seeding_scripts/products/product_insert.sql',
+    seed: 'psql "$DATABASE_URL" -f prisma/seeding_scripts/products/product_insert.sql',
   },
   datasource: {
     url: process.env.DATABASE_URL,
