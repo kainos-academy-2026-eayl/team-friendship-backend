@@ -46,5 +46,31 @@ dotenv.config();
 
 sendEmail({
   subject: 'Hello from TypeScript',
-  text: 'Hello world!',
+  html: `
+  <!doctype html>
+<html lang="en">
+  <body style="margin:0;padding:24px;font-family:Arial,sans-serif;color:#222;">
+    <h1 style="font-size:24px;">Reset your FriendShop password</h1>
+
+    <p>We received a request to reset the password for your account.</p>
+
+    <p>
+      <a
+        href="{{resetUrl}}"
+        style="display:inline-block;padding:12px 20px;background:#2457c5;color:#fff;text-decoration:none;border-radius:4px;"
+      >
+        Reset password
+      </a>
+    </p>
+
+    <p>This link expires after a short time and can only be used once.</p>
+    <p>If you didn’t request a password reset, you can ignore this email.</p>
+
+    <p style="font-size:12px;color:#666;">
+      If the button doesn’t work, copy and paste this address into your browser:<br />
+      <a href="{{resetUrl}}">{{resetUrl}}</a>
+    </p>
+  </body>
+</html>
+  `,
 });
