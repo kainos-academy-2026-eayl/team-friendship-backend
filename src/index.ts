@@ -2,9 +2,13 @@ import 'dotenv/config';
 import dotenv from 'dotenv';
 import { createApp } from './app';
 import { LoginController } from './controllers/loginController';
+import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
 import { LoginRepository } from './repositories/loginRepository';
+import { ProductRepository } from './repositories/productRepository';
+import { sendEmail } from './services/emailService';
 import { LoginService } from './services/loginService';
+import { ProductService } from './services/productService';
 
 if (!process.env.PORT) {
   throw new Error('PORT environment variable is not set');
@@ -27,6 +31,11 @@ const loginController = new LoginController(
   new LoginService(new LoginRepository(prisma)),
 );
 app.use('/', loginController.router());
+
+const productController = new ProductController(
+  new ProductService(new ProductRepository(prisma)),
+);
+app.use('/', productController.router());
 
 // Keep everything below this comment at the bottom of the file
 const server = app.listen(PORT, HOST, () => {
