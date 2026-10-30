@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
-import { onTestFinished, test } from 'vitest';
+import { onTestFinished, test, vi } from 'vitest';
 import { createApp } from '../src/app';
+
+const { sendEmail } = vi.hoisted(() => ({
+  sendEmail: vi.fn(),
+}));
+
+vi.mock('../src/services/emailService', () => ({ sendEmail }));
 
 test('GET /health returns service status and uptime', async () => {
   const server = createApp().listen(0, '127.0.0.1');
@@ -77,8 +83,9 @@ test('POST /forgot-password accepts a valid email request shape', async () => {
     },
   );
 
-  assert.equal(response.status, 501);
+  assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
-    error: 'Password recovery is not available yet.',
+    message: 'Recovery email request sent.',
   });
+  assert.equal(sendEmail.mock.calls[0]?.[0].to, 'ada@example.com');
 });

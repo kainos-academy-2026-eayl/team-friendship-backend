@@ -13,7 +13,6 @@ export const sendEmail = async (options: SendMailOptions) => {
 
   const mailOptions: SendMailOptions = {
     from: process.env.SENDER_EMAIL,
-    to: process.env.RECEIVER_EMAIL,
     ...options,
   };
 
