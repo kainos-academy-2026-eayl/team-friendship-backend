@@ -6,7 +6,6 @@ import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
 import { LoginRepository } from './repositories/loginRepository';
 import { ProductRepository } from './repositories/productRepository';
-import { sendEmail } from './services/emailService';
 import { LoginService } from './services/loginService';
 import { ProductService } from './services/productService';
 
