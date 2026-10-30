@@ -6,7 +6,6 @@ import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
 import { LoginRepository } from './repositories/loginRepository';
 import { ProductRepository } from './repositories/productRepository';
-import { sendEmail } from './services/emailService';
 import { LoginService } from './services/loginService';
 import { ProductService } from './services/productService';
 
@@ -51,8 +50,3 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
 //using the sendEmail function to send an email
 
 dotenv.config();
-
-sendEmail({
-  subject: 'Hello from TypeScript',
-  text: 'Hello world!',
-});
