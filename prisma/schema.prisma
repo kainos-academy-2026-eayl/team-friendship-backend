@@ -22,6 +22,7 @@ model Customer {
   customerPhone    String
   customerPassword String
   passwordResetTokens PasswordResetToken[]
+  orders           Order[]
 }
 
 model PasswordResetToken {

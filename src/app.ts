@@ -2,13 +2,17 @@ import cors from 'cors';
 import express, { type Express, type Request, type Response } from 'express';
 import { registerCustomer } from './controllers/customerController';
 import { forgotPassword } from './controllers/forgotPasswordController';
+import { OrderController } from './controllers/orderController';
 import { resetPassword } from './controllers/resetPasswordController';
+import { getPrismaClient } from './db/prisma';
 import type { CustomerRepository } from './models/customerModel';
 import type { PasswordResetRepository } from './models/passwordResetModel';
 import {
   PrismaCustomerRepository,
   PrismaPasswordResetRepository,
 } from './repositories/customerRepository';
+import { OrderRepository } from './repositories/orderRepository';
+import { OrderServiceImpl } from './services/orderService';
 
 const DEFAULT_FRONTEND_ORIGINS = [
   'http://localhost:8000',
