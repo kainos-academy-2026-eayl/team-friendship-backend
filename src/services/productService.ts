@@ -14,7 +14,7 @@ type ProductRepositoryContract = Pick<
 >;
 
 export class ProductService {
-  constructor(private readonly repository: ProductRepositoryContract) {}
+  constructor(public readonly repository: ProductRepositoryContract) { }
 
   getAllProducts(): Promise<Product[]> {
     return this.repository.findAll();
