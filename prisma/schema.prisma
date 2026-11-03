@@ -21,6 +21,18 @@ model Customer {
   customerEmail    String @unique
   customerPhone    String
   customerPassword String
+  passwordResetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id            Int      @id @default(autoincrement())
+  customerEmail String
+  tokenHash     String   @unique
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+  customer      Customer @relation(fields: [customerEmail], references: [customerEmail], onDelete: Cascade)
+
+  @@index([customerEmail])
 }
 
 model Product {
