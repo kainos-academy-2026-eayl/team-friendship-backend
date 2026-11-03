@@ -28,6 +28,7 @@ export const loginSchema = z.object({
     .max(128, { error: 'Password must be 128 characters or fewer' }),
 });
 
+// Refresh tokens travel in JSON bodies
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1).max(256),
 });
@@ -42,7 +43,7 @@ export class LoginController {
   constructor(
     private readonly service: LoginServiceContract,
     private readonly authService: AuthServiceContract,
-  ) { }
+  ) {}
 
   login = async (req: Request, res: Response): Promise<void> => {
     const result = loginSchema.safeParse(req.body ?? {});

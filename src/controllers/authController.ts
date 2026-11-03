@@ -15,7 +15,7 @@ declare global {
 }
 
 const BEARER_PATTERN =
-  /^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/;
+  /^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/i;
 
 type AccessTokenVerifier = Pick<AccessTokenService, 'verify'>;
 

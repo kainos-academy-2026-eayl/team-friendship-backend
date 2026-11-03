@@ -38,7 +38,7 @@ function fakeAuth(overrides: Partial<AuthContract> = {}): AuthContract {
   return {
     startSession: async () => tokens,
     refresh: async () => tokens,
-    logout: async () => { },
+    logout: async () => {},
     ...overrides,
   };
 }
@@ -152,7 +152,7 @@ describe('POST /login', () => {
 
   test('returns a generic JSON error for unexpected service failures', async () => {
     const error = new Error('Database connection details');
-    const log = vi.spyOn(console, 'error').mockImplementation(() => { });
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     onTestFinished(() => log.mockRestore());
     const baseUrl = await startServer(async () => {
       throw error;

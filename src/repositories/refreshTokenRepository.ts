@@ -1,9 +1,27 @@
-import type { PrismaClient } from '../generated/prisma/client';
+import type { Prisma, PrismaClient } from '../generated/prisma/client';
 
 export type RotationResult =
   | { status: 'rotated'; customerId: number; expiresAt: Date }
   | { status: 'reused' }
   | { status: 'invalid' };
+
+type Tx = Prisma.TransactionClient;
+
+// Rotation, replay handling and logout all hold this lock, so a family-wide revoke can't miss a replacement inserted by a concurrent rotation.
+async function lockFamily(tx: Tx, familyId: string): Promise<void> {
+  await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtextextended(${familyId}, 0))`;
+}
+
+async function revokeAllInFamily(
+  tx: Tx,
+  familyId: string,
+  now: Date,
+): Promise<void> {
+  await tx.refreshToken.updateMany({
+    where: { familyId, revokedAt: null },
+    data: { revokedAt: now },
+  });
+}
 
 export class RefreshTokenRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -26,29 +44,27 @@ export class RefreshTokenRepository {
 
   rotate(oldHash: string, newHash: string, now: Date): Promise<RotationResult> {
     return this.prisma.$transaction(async (tx): Promise<RotationResult> => {
-      // The revokedAt condition makes this a compare-and-swap, so concurrent refreshes can't both succeed.
-      const consumed = await tx.refreshToken.updateMany({
-        where: { tokenHash: oldHash, revokedAt: null, expiresAt: { gt: now } },
-        data: { revokedAt: now },
+      const found = await tx.refreshToken.findUnique({
+        where: { tokenHash: oldHash },
       });
-
-      if (consumed.count === 0) {
-        const existing = await tx.refreshToken.findUnique({
-          where: { tokenHash: oldHash },
-        });
-        if (existing?.revokedAt) {
-          await tx.refreshToken.updateMany({
-            where: { familyId: existing.familyId, revokedAt: null },
-            data: { revokedAt: now },
-          });
-          return { status: 'reused' };
-        }
+      if (!found) {
         return { status: 'invalid' };
       }
 
+      await lockFamily(tx, found.familyId);
+      // Re-read under the lock: a concurrent rotation or revoke may have committed meanwhile.
       const current = await tx.refreshToken.findUniqueOrThrow({
-        where: { tokenHash: oldHash },
+        where: { id: found.id },
       });
+
+      if (current.revokedAt) {
+        await revokeAllInFamily(tx, current.familyId, now);
+        return { status: 'reused' };
+      }
+      if (current.expiresAt <= now) {
+        return { status: 'invalid' };
+      }
+
       const replacement = await tx.refreshToken.create({
         data: {
           tokenHash: newHash,
@@ -59,7 +75,7 @@ export class RefreshTokenRepository {
       });
       await tx.refreshToken.update({
         where: { id: current.id },
-        data: { replacedById: replacement.id },
+        data: { revokedAt: now, replacedById: replacement.id },
       });
 
       return {
@@ -70,14 +86,14 @@ export class RefreshTokenRepository {
     });
   }
 
-  async revokeFamily(tokenHash: string, now: Date): Promise<void> {
-    const token = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash },
-    });
-    if (!token) return;
-    await this.prisma.refreshToken.updateMany({
-      where: { familyId: token.familyId, revokedAt: null },
-      data: { revokedAt: now },
+  revokeFamily(tokenHash: string, now: Date): Promise<void> {
+    return this.prisma.$transaction(async (tx) => {
+      const token = await tx.refreshToken.findUnique({
+        where: { tokenHash },
+      });
+      if (!token) return;
+      await lockFamily(tx, token.familyId);
+      await revokeAllInFamily(tx, token.familyId, now);
     });
   }
 }

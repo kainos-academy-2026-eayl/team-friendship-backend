@@ -170,11 +170,27 @@ If your route reads a JSON request body, add `app.use(express.json({ limit: '100
 
 Environment variables are loaded from `.env` by [dotenv](https://github.com/motdotla/dotenv) at startup.
 
-| Variable | Required | Description                                                                            |
-| -------- | -------- | -------------------------------------------------------------------------------------- |
-| `PORT`   | yes      | Port the service listens on. The service exits at startup if it is missing or invalid. |
+| Variable            | Required | Description                                                                                          |
+| ------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `PORT`              | yes      | Port the service listens on. The service exits at startup if it is missing or invalid.               |
+| `JWT_ACCESS_SECRET` | yes      | Secret for signing access tokens (at least 32 bytes). The service exits at startup if it is missing. |
 
 The server binds to `0.0.0.0` so it is reachable from outside a container. Add new variables to both your `.env` and [.env.example](.env.example).
+
+## Authentication
+
+This API is called **server-to-server** by the server-rendered frontend, never directly by the browser. Tokens are therefore exchanged in JSON bodies; the backend sets **no cookies**. The frontend stores the tokens in its own `HttpOnly`, `SameSite=Lax` (and `Secure` in production) cookies for the browser.
+
+| Endpoint                 | Request body                                 | Success response                                                                                 |
+| ------------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `POST /login`            | `{ email, password }`                        | `200` `{ message, customer, accessToken, tokenType, expiresIn, refreshToken, refreshExpiresAt }` |
+| `POST /auth/refresh`     | `{ refreshToken }`                           | `200` `{ accessToken, tokenType, expiresIn, refreshToken, refreshExpiresAt }`                    |
+| `POST /auth/logout`      | `{ refreshToken }` (optional)                | `204`                                                                                            |
+| Protected routes (`/me`) | `Authorization: Bearer <accessToken>` header | Route response, or `401` if the token is missing/invalid/expired                                 |
+- **Access tokens** are JWTs valid for 15 minutes (`expiresIn` seconds).
+- **Refresh tokens** are opaque, valid until `refreshExpiresAt` (7 days from login, never extended) and **single-use**: every refresh returns a new one. Reusing an old token revokes the whole login session.
+- Token responses are sent with `Cache-Control: no-store`.
+- A browser client calling this API directly would need a different contract (refresh token in an `HttpOnly` cookie with credentialed CORS); that is intentionally not supported.
 
 ## Troubleshooting
 
