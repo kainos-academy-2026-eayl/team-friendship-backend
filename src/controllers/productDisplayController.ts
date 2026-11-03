@@ -6,8 +6,8 @@ import {
 } from 'express';
 import { z } from 'zod';
 import {
-  ProductNotFoundError,
   type DisplayProduct,
+  ProductNotFoundError,
 } from '../services/productDisplayService';
 
 export const productIdSchema = z.object({
@@ -20,7 +20,7 @@ export const productIdSchema = z.object({
 type ProductServiceContract = Pick<DisplayProduct, 'getProductById'>;
 
 export class ProductController {
-  constructor(private readonly service: ProductServiceContract) { }
+  constructor(private readonly service: ProductServiceContract) {}
 
   getById = async (req: Request, res: Response): Promise<void> => {
     const result = productIdSchema.safeParse(req.params);
