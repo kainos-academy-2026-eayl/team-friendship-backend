@@ -31,7 +31,13 @@ const createOrderSchema = z.object({
           .positive({ error: 'Quantity must be positive' }),
       }),
     )
-    .min(1, { message: 'Order must contain at least one service' }),
+    .min(1, { message: 'Order must contain at least one service' })
+    .refine(
+      (services) =>
+        new Set(services.map((service) => service.productID)).size ===
+        services.length,
+      { message: 'Each product may appear only once in an order' },
+    ),
 });
 
 const orderIdSchema = z.object({
