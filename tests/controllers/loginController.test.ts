@@ -1,6 +1,6 @@
 import { once } from 'node:events';
 import type { AddressInfo } from 'node:net';
-import { describe, expect, onTestFinished, test, vi } from 'vitest';
+import { afterEach, describe, expect, onTestFinished, test, vi } from 'vitest';
 import { createApp } from '../../src/app';
 import { LoginController } from '../../src/controllers/loginController';
 import {
@@ -20,6 +20,10 @@ const customer: CustomerDetails = {
   customerEmail: 'ada@example.com',
   customerPhone: '07123456789',
 };
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 async function startServer(
   login: (
@@ -55,6 +59,7 @@ function postLogin(baseUrl: string, body: unknown) {
 
 describe('POST /login', () => {
   test('returns 200 and customer details for valid credentials', async () => {
+    vi.stubEnv('AUTH_TOKEN_SECRET', 'test-auth-token-secret-at-least-32-bytes');
     const calls: [string, string, string][] = [];
     const baseUrl = await startServer(async (email, password, clientId) => {
       calls.push([email, password, clientId]);
@@ -70,10 +75,15 @@ describe('POST /login', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe(
       'http://localhost:8000',
     );
-    expect(await response.json()).toEqual({
+    const body = await response.json();
+    expect(body).toMatchObject({
       message: 'Login successful',
       customer,
     });
+    expect(body).toHaveProperty(
+      'accessToken',
+      expect.stringMatching(/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/),
+    );
     expect(calls).toEqual([['ada@example.com', 'Password123!', '127.0.0.1']]);
   });
 

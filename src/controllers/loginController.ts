@@ -6,6 +6,10 @@ import {
 } from 'express';
 import { z } from 'zod';
 import {
+  AuthenticationConfigurationError,
+  createAccessToken,
+} from '../middleware/authentication';
+import {
   InvalidCredentialsError,
   type LoginService,
   TooManyAttemptsError,
@@ -42,7 +46,10 @@ export class LoginController {
       result.data.password,
       req.ip ?? req.socket.remoteAddress ?? 'unknown',
     );
-    res.status(200).json({ message: 'Login successful', customer });
+    const accessToken = createAccessToken(customer.customerID);
+    res
+      .status(200)
+      .json({ message: 'Login successful', customer, accessToken });
   };
 
   router(): Router {
@@ -66,6 +73,12 @@ export class LoginController {
             .status(429)
             .set('Retry-After', String(error.retryAfterSeconds))
             .json({ error: error.message });
+          return;
+        }
+        if (error instanceof AuthenticationConfigurationError) {
+          res
+            .status(503)
+            .json({ error: 'Authentication is temporarily unavailable' });
           return;
         }
         console.error('Unexpected login error', error);

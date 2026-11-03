@@ -36,7 +36,7 @@ describe.skipIf(!process.env.DATABASE_URL)('Order Service', () => {
   });
 
   it('should retrieve an order by ID', async () => {
-    const order = await orderService.getOrderById(1);
+    const order = await orderService.getOrderById(1, 1);
 
     expect(order).toBeDefined();
     expect(order.orderID).toBe(1);
@@ -52,7 +52,7 @@ describe.skipIf(!process.env.DATABASE_URL)('Order Service', () => {
   });
 
   it('should throw OrderNotFoundError for non-existent order', async () => {
-    await expect(orderService.getOrderById(99999)).rejects.toThrow(
+    await expect(orderService.getOrderById(99999, 1)).rejects.toThrow(
       'Order 99999 not found',
     );
   });

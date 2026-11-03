@@ -170,9 +170,10 @@ If your route reads a JSON request body, add `app.use(express.json({ limit: '100
 
 Environment variables are loaded from `.env` by [dotenv](https://github.com/motdotla/dotenv) at startup.
 
-| Variable | Required | Description                                                                            |
-| -------- | -------- | -------------------------------------------------------------------------------------- |
-| `PORT`   | yes      | Port the service listens on. The service exits at startup if it is missing or invalid. |
+| Variable            | Required | Description                                                                                   |
+| ------------------- | -------- | --------------------------------------------------------------------------------------------- |
+| `PORT`              | yes      | Port the service listens on. The service exits at startup if it is missing or invalid.        |
+| `AUTH_TOKEN_SECRET` | yes      | Random secret of at least 32 bytes used to sign login access tokens and protect order routes. |
 
 The server binds to `0.0.0.0` so it is reachable from outside a container. Add new variables to both your `.env` and [.env.example](.env.example).
 

@@ -43,8 +43,9 @@ export class OrderServiceImpl {
 
   async getOrderById(
     orderID: number,
+    customerID: number,
   ): Promise<Order & { orderServices: OrderService[] }> {
-    const order = await this.repository.findById(orderID);
+    const order = await this.repository.findById(orderID, customerID);
     if (!order) {
       throw new OrderNotFoundError(orderID);
     }

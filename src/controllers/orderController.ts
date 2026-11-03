@@ -5,16 +5,13 @@ import {
   Router,
 } from 'express';
 import { z } from 'zod';
+import { authenticateCustomer } from '../middleware/authentication';
 import {
   OrderNotFoundError,
   type OrderServiceImpl,
 } from '../services/orderService';
 
 const createOrderSchema = z.object({
-  customerID: z
-    .number({ error: 'Customer ID must be a number' })
-    .int({ error: 'Customer ID must be a whole number' })
-    .positive({ error: 'Customer ID must be positive' }),
   status: z
     .string({ error: 'Status must be a string' })
     .min(1, { message: 'Status cannot be empty' }),
@@ -63,6 +60,12 @@ export class OrderController {
   constructor(private readonly service: OrderServiceContract) {}
 
   create = async (req: Request, res: Response): Promise<void> => {
+    const customerID = req.authenticatedCustomerID;
+    if (!customerID) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const result = createOrderSchema.safeParse(req.body);
     if (!result.success) {
       res.status(400).json({
@@ -72,11 +75,20 @@ export class OrderController {
       return;
     }
 
-    const order = await this.service.createOrder(result.data);
+    const order = await this.service.createOrder({
+      ...result.data,
+      customerID,
+    });
     res.status(201).json({ order });
   };
 
   getById = async (req: Request, res: Response): Promise<void> => {
+    const customerID = req.authenticatedCustomerID;
+    if (!customerID) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const result = orderIdSchema.safeParse(req.params);
     if (!result.success) {
       res.status(400).json({
@@ -86,11 +98,17 @@ export class OrderController {
       return;
     }
 
-    const order = await this.service.getOrderById(result.data.id);
+    const order = await this.service.getOrderById(result.data.id, customerID);
     res.status(200).json({ order });
   };
 
   getByCustomerId = async (req: Request, res: Response): Promise<void> => {
+    const customerID = req.authenticatedCustomerID;
+    if (!customerID) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
     const result = customerIdSchema.safeParse(req.params);
     if (!result.success) {
       res.status(400).json({
@@ -100,13 +118,19 @@ export class OrderController {
       return;
     }
 
-    const orders = await this.service.getCustomerOrders(result.data.id);
+    if (result.data.id !== customerID) {
+      res.status(404).json({ error: 'Customer orders not found' });
+      return;
+    }
+
+    const orders = await this.service.getCustomerOrders(customerID);
     res.status(200).json({ orders });
   };
 
   router(): Router {
     const router = Router();
 
+    router.use(authenticateCustomer);
     router.post('/orders', this.create);
     router.get('/orders/:id', this.getById);
     router.get('/users/:id/orders', this.getByCustomerId);

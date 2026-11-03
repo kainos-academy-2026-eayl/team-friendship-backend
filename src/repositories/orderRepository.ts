@@ -38,9 +38,10 @@ export class OrderRepository {
 
   async findById(
     orderID: number,
+    customerID: number,
   ): Promise<(Order & { orderServices: OrderService[] }) | null> {
-    return this.prisma.order.findUnique({
-      where: { orderID },
+    return this.prisma.order.findFirst({
+      where: { orderID, customerID },
       include: {
         orderServices: true,
       },
