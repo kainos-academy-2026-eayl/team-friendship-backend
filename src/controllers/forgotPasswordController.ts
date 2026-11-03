@@ -19,6 +19,8 @@ export const forgotPassword: RequestHandler = async (req, res) => {
     return;
   }
 
+  const resetUrl = `http://localhost:8000/reset_password?email=${encodeURIComponent(result.data.email)}`;
+
   await sendEmail({
     to: result.data.email,
     subject: 'Reset your Friendshop password',
@@ -32,7 +34,7 @@ export const forgotPassword: RequestHandler = async (req, res) => {
 
     <p>
       <a
-        href="{{resetUrl}}"
+        href="${resetUrl}"
         style="display:inline-block;padding:12px 20px;background:#2457c5;color:#fff;text-decoration:none;border-radius:4px;"
       >
         Reset password
@@ -44,7 +46,7 @@ export const forgotPassword: RequestHandler = async (req, res) => {
 
     <p style="font-size:12px;color:#666;">
       If the button doesn’t work, copy and paste this address into your browser:<br />
-      <a href="{{resetUrl}}">{{resetUrl}}</a>
+      <a href="${resetUrl}">${resetUrl}</a>
     </p>
   </body>
 </html>

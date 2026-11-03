@@ -89,4 +89,8 @@ test('POST /forgot-password accepts a valid email request shape', async () => {
       'Recovery email request sent, please check your inbox to continue.',
   });
   assert.equal(sendEmail.mock.calls[0]?.[0].to, 'ada@example.com');
+  assert.match(
+    sendEmail.mock.calls[0]?.[0].html ?? '',
+    /http:\/\/localhost:8000\/reset_password\?email=ada%40example\.com/,
+  );
 });
