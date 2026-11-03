@@ -39,7 +39,6 @@ export class ProductController {
   router(): Router {
     const router = Router();
 
-    router.get('/products', this.getAll);
     router.get('/products/:id', this.getById);
 
     // Express 5 forwards rejected promises from async handlers to this error handler.
