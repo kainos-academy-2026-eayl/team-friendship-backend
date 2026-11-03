@@ -13,14 +13,30 @@ datasource db {
 }
 
 model Customer {
-  customerID       Int    @id @default(autoincrement())
+  customerID       Int            @id @default(autoincrement())
   customerForename String
   customerSurname  String
   address          String
   postcode         String
-  customerEmail    String @unique
+  customerEmail    String         @unique
   customerPhone    String
   customerPassword String
+  refreshTokens    RefreshToken[]
+}
+
+model RefreshToken {
+  id           String    @id @default(uuid())
+  tokenHash    String    @unique
+  familyId     String
+  customerID   Int
+  customer     Customer  @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  createdAt    DateTime  @default(now())
+
+  @@index([customerID])
+  @@index([familyId])
 }
 
 model Product {

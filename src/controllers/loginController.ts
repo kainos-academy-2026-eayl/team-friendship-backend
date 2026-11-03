@@ -5,6 +5,12 @@ import {
   Router,
 } from 'express';
 import { z } from 'zod';
+import { ACCESS_TOKEN_TTL_SECONDS } from '../services/accessTokenService';
+import {
+  type AuthService,
+  type AuthTokens,
+  InvalidRefreshTokenError,
+} from '../services/authService';
 import {
   InvalidCredentialsError,
   type LoginService,
@@ -22,10 +28,21 @@ export const loginSchema = z.object({
     .max(128, { error: 'Password must be 128 characters or fewer' }),
 });
 
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1).max(256),
+});
+
 type LoginServiceContract = Pick<LoginService, 'login'>;
+type AuthServiceContract = Pick<
+  AuthService,
+  'startSession' | 'refresh' | 'logout'
+>;
 
 export class LoginController {
-  constructor(private readonly service: LoginServiceContract) {}
+  constructor(
+    private readonly service: LoginServiceContract,
+    private readonly authService: AuthServiceContract,
+  ) { }
 
   login = async (req: Request, res: Response): Promise<void> => {
     const result = loginSchema.safeParse(req.body ?? {});
@@ -42,13 +59,54 @@ export class LoginController {
       result.data.password,
       req.ip ?? req.socket.remoteAddress ?? 'unknown',
     );
-    res.status(200).json({ message: 'Login successful', customer });
+    const tokens = await this.authService.startSession(customer.customerID);
+
+    this.sendTokens(res, tokens, { message: 'Login successful', customer });
   };
+
+  refresh = async (req: Request, res: Response): Promise<void> => {
+    const result = refreshTokenSchema.safeParse(req.body ?? {});
+    if (!result.success) {
+      throw new InvalidRefreshTokenError();
+    }
+
+    const tokens = await this.authService.refresh(result.data.refreshToken);
+    this.sendTokens(res, tokens, {});
+  };
+
+  logout = async (req: Request, res: Response): Promise<void> => {
+    const result = refreshTokenSchema.safeParse(req.body ?? {});
+    if (result.success) {
+      await this.authService.logout(result.data.refreshToken);
+    }
+
+    res.status(204).end();
+  };
+
+  private sendTokens(
+    res: Response,
+    tokens: AuthTokens,
+    body: Record<string, unknown>,
+  ): void {
+    res
+      .set('Cache-Control', 'no-store')
+      .status(200)
+      .json({
+        ...body,
+        accessToken: tokens.accessToken,
+        tokenType: 'Bearer',
+        expiresIn: ACCESS_TOKEN_TTL_SECONDS,
+        refreshToken: tokens.refreshToken,
+        refreshExpiresAt: tokens.refreshExpiresAt.toISOString(),
+      });
+  }
 
   router(): Router {
     const router = Router();
 
     router.post('/login', this.login);
+    router.post('/auth/refresh', this.refresh);
+    router.post('/auth/logout', this.logout);
 
     // Express 5 forwards rejected promises from async handlers to this error handler.
     router.use(
@@ -58,6 +116,10 @@ export class LoginController {
           return;
         }
         if (error instanceof InvalidCredentialsError) {
+          res.status(401).json({ error: error.message });
+          return;
+        }
+        if (error instanceof InvalidRefreshTokenError) {
           res.status(401).json({ error: error.message });
           return;
         }
