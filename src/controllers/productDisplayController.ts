@@ -20,7 +20,7 @@ export const productIdSchema = z.object({
 type ProductServiceContract = Pick<ProductService, 'getProductById'>;
 
 export class ProductController {
-    constructor(private readonly service: ProductServiceContract) { }
+  constructor(private readonly service: ProductServiceContract) {}
 
   getById = async (req: Request, res: Response): Promise<void> => {
     const result = productIdSchema.safeParse(req.params);
