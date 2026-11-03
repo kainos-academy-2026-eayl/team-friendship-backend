@@ -2,8 +2,13 @@ import cors from 'cors';
 import express, { type Express, type Request, type Response } from 'express';
 import { registerCustomer } from './controllers/customerController';
 import { forgotPassword } from './controllers/forgotPasswordController';
+import { resetPassword } from './controllers/resetPasswordController';
 import type { CustomerRepository } from './models/customerModel';
-import { PrismaCustomerRepository } from './repositories/customerRepository';
+import type { PasswordResetRepository } from './models/passwordResetModel';
+import {
+  PrismaCustomerRepository,
+  PrismaPasswordResetRepository,
+} from './repositories/customerRepository';
 
 const DEFAULT_FRONTEND_ORIGINS = [
   'http://localhost:8000',
@@ -20,6 +25,7 @@ function frontendOrigins(): string[] {
 
 export function createApp(
   customerRepository: CustomerRepository = new PrismaCustomerRepository(),
+  passwordResetRepository: PasswordResetRepository = new PrismaPasswordResetRepository(),
 ): Express {
   const app = express();
 
@@ -31,7 +37,8 @@ export function createApp(
   });
 
   app.post('/register', registerCustomer(customerRepository));
-  app.post('/forgot-password', forgotPassword);
+  app.post('/forgot-password', forgotPassword(passwordResetRepository));
+  app.post('/reset-password', resetPassword(passwordResetRepository));
 
   return app;
 }

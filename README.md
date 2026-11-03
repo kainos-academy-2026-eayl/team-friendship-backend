@@ -177,6 +177,20 @@ Environment variables are loaded from `.env` by [dotenv](https://github.com/motd
 
 The server binds to `0.0.0.0` so it is reachable from outside a container. Add new variables to both your `.env` and [.env.example](.env.example).
 
+## Password reset
+
+Set `FRONTEND_URL` to the frontend origin where the `/reset_password` page is hosted.
+Apply the password-reset token table migration with `npx prisma migrate dev` locally
+or `npx prisma migrate deploy` in deployed environments.
+
+`POST /forgot-password` accepts `{ "email": "customer@example.com" }`. For an
+existing account, the service emails a link containing the email and a
+single-use token that expires after 15 minutes. Only the token hash is stored.
+The frontend should prefill its email field from the `email` query parameter
+and submit the form to `POST /reset-password` with
+`{ "email": "...", "token": "...", "password": "..." }`. The service hashes the
+new password before updating the customer record.
+
 ## Authentication
 
 This API is called **server-to-server** by the server-rendered frontend, never directly by the browser. Tokens are therefore exchanged in JSON bodies; the backend sets **no cookies**. The frontend stores the tokens in its own `HttpOnly`, `SameSite=Lax` (and `Secure` in production) cookies for the browser.
