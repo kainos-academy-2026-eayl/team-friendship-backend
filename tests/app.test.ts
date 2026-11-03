@@ -85,7 +85,8 @@ test('POST /forgot-password accepts a valid email request shape', async () => {
 
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
-    message: 'Recovery email request sent.',
+    message:
+      'Recovery email request sent, please check your inbox to continue.',
   });
   assert.equal(sendEmail.mock.calls[0]?.[0].to, 'ada@example.com');
 });
