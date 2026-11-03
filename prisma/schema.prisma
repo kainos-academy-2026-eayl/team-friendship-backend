@@ -13,14 +13,15 @@ datasource db {
 }
 
 model Customer {
-  customerID       Int    @id @default(autoincrement())
+  customerID       Int     @id @default(autoincrement())
   customerForename String
   customerSurname  String
   address          String
   postcode         String
-  customerEmail    String @unique
+  customerEmail    String  @unique
   customerPhone    String
   customerPassword String
+  orders           Order[]
 }
 
 model Product {
@@ -30,4 +31,24 @@ model Product {
   productPrice       Float
   productImage       String
   productStock       Int
+  orderServices      OrderService[]
+}
+
+model Order {
+  orderID       Int            @id @default(autoincrement())
+  customerID    Int
+  dateCreated   DateTime       @default(now())
+  status        String
+  customer      Customer       @relation(fields: [customerID], references: [customerID])
+  orderServices OrderService[]
+}
+
+model OrderService {
+  orderID   Int
+  productID Int
+  quantity  Int
+  order     Order   @relation(fields: [orderID], references: [orderID])
+  product   Product @relation(fields: [productID], references: [productID])
+
+  @@id([orderID, productID])
 }

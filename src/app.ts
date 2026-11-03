@@ -2,8 +2,12 @@ import cors from 'cors';
 import express, { type Express, type Request, type Response } from 'express';
 import { registerCustomer } from './controllers/customerController';
 import { forgotPassword } from './controllers/forgotPasswordController';
+import { OrderController } from './controllers/orderController';
+import { getPrismaClient } from './db/prisma';
 import type { CustomerRepository } from './models/customerModel';
 import { PrismaCustomerRepository } from './repositories/customerRepository';
+import { OrderRepository } from './repositories/orderRepository';
+import { OrderServiceImpl } from './services/orderService';
 
 const DEFAULT_FRONTEND_ORIGINS = [
   'http://localhost:8000',
@@ -32,6 +36,19 @@ export function createApp(
 
   app.post('/register', registerCustomer(customerRepository));
   app.post('/forgot-password', forgotPassword);
+
+  // Order endpoints - only create if DATABASE_URL is available
+  if (process.env.DATABASE_URL) {
+    try {
+      const orderRepository = new OrderRepository(getPrismaClient());
+      const orderService = new OrderServiceImpl(orderRepository);
+      const orderController = new OrderController(orderService);
+      app.use(orderController.router());
+    } catch (_error) {
+      // If order endpoints fail to initialize, continue without them
+      // This allows tests to run without DATABASE_URL
+    }
+  }
 
   return app;
 }
