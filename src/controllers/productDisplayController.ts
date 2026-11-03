@@ -7,8 +7,8 @@ import {
 import { z } from 'zod';
 import {
   ProductNotFoundError,
-  type ProductService,
-} from '../services/productService';
+  type DisplayProduct,
+} from '../services/productDisplayService';
 
 export const productIdSchema = z.object({
   id: z.coerce
@@ -17,10 +17,10 @@ export const productIdSchema = z.object({
     .positive({ error: 'Product id must be positive' }),
 });
 
-type ProductServiceContract = Pick<ProductService, 'getProductById'>;
+type ProductServiceContract = Pick<DisplayProduct, 'getProductById'>;
 
 export class ProductController {
-  constructor(private readonly service: ProductServiceContract) {}
+  constructor(private readonly service: ProductServiceContract) { }
 
   getById = async (req: Request, res: Response): Promise<void> => {
     const result = productIdSchema.safeParse(req.params);
