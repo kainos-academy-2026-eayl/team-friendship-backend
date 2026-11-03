@@ -51,5 +51,8 @@ export const forgotPassword: RequestHandler = async (req, res) => {
   `,
   });
 
-  res.status(200).json({ message: 'Recovery email request sent.' });
+  res.status(200).json({
+    message:
+      'Recovery email request sent, please check your inbox to continue.',
+  });
 };
