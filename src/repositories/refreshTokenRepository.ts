@@ -1,7 +1,8 @@
 import type { Prisma, PrismaClient } from '../generated/prisma/client';
+import type { AuthPrincipal } from '../services/accessTokenService';
 
 export type RotationResult =
-  | { status: 'rotated'; customerId: number; expiresAt: Date }
+  | { status: 'rotated'; principal: AuthPrincipal; expiresAt: Date }
   | { status: 'reused' }
   | { status: 'invalid' };
 
@@ -28,14 +29,16 @@ export class RefreshTokenRepository {
 
   async create(data: {
     tokenHash: string;
-    customerId: number;
+    principal: AuthPrincipal;
     familyId: string;
     expiresAt: Date;
   }): Promise<void> {
     await this.prisma.refreshToken.create({
       data: {
         tokenHash: data.tokenHash,
-        customerID: data.customerId,
+        customerID:
+          data.principal.type === 'customer' ? data.principal.id : null,
+        staffID: data.principal.type === 'staff' ? data.principal.id : null,
         familyId: data.familyId,
         expiresAt: data.expiresAt,
       },
@@ -65,10 +68,25 @@ export class RefreshTokenRepository {
         return { status: 'invalid' };
       }
 
+      const principal =
+        current.customerID !== null
+          ? { type: 'customer' as const, id: current.customerID }
+          : current.staffID !== null
+            ? { type: 'staff' as const, id: current.staffID }
+            : null;
+      if (
+        !principal ||
+        (current.customerID !== null && current.staffID !== null)
+      ) {
+        await revokeAllInFamily(tx, current.familyId, now);
+        return { status: 'invalid' };
+      }
+
       const replacement = await tx.refreshToken.create({
         data: {
           tokenHash: newHash,
           customerID: current.customerID,
+          staffID: current.staffID,
           familyId: current.familyId,
           expiresAt: current.expiresAt,
         },
@@ -80,7 +98,7 @@ export class RefreshTokenRepository {
 
       return {
         status: 'rotated',
-        customerId: current.customerID,
+        principal,
         expiresAt: current.expiresAt,
       };
     });

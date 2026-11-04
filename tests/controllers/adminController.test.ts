@@ -16,12 +16,17 @@ const dashboard: AdminDashboard = {
   ],
 };
 
-async function startServer(role: 'admin' | 'customer' | null = 'admin') {
+async function startServer(
+  role: 'admin' | 'STAFF' | 'customer' | null = 'admin',
+) {
   const app = express();
   app.use(express.json());
   app.use((req, res, next) => {
-    if (req.get('x-customer-id')) {
-      res.locals.customerId = Number(req.get('x-customer-id'));
+    if (req.get('x-user-id')) {
+      res.locals.principal = {
+        type: req.get('x-user-type') === 'customer' ? 'customer' : 'staff',
+        id: Number(req.get('x-user-id')),
+      };
     }
     next();
   });
@@ -35,7 +40,9 @@ async function startServer(role: 'admin' | 'customer' | null = 'admin') {
     })),
   };
   const customers = {
-    findRoleByCustomerId: vi.fn(async () => role),
+    findRoleByPrincipal: vi.fn(async (principal) =>
+      principal.type === 'staff' ? role : 'customer',
+    ),
   };
 
   app.use('/admin', new AdminController(repository, customers).router());
@@ -60,7 +67,7 @@ describe('admin endpoints', () => {
     const { baseUrl, repository } = await startServer();
 
     const response = await fetch(`${baseUrl}/admin/dashboard?period=week`, {
-      headers: { 'x-customer-id': '42' },
+      headers: { 'x-user-id': '42', 'x-user-type': 'staff' },
     });
 
     expect(response.status).toBe(200);
@@ -73,7 +80,7 @@ describe('admin endpoints', () => {
     const { baseUrl, repository } = await startServer();
 
     const response = await fetch(`${baseUrl}/admin/dashboard?period=year`, {
-      headers: { 'x-customer-id': '42' },
+      headers: { 'x-user-id': '42', 'x-user-type': 'staff' },
     });
 
     expect(response.status).toBe(400);
@@ -84,7 +91,29 @@ describe('admin endpoints', () => {
     const { baseUrl, repository } = await startServer('customer');
 
     const response = await fetch(`${baseUrl}/admin/dashboard`, {
-      headers: { 'x-customer-id': '42' },
+      headers: { 'x-user-id': '42', 'x-user-type': 'customer' },
+    });
+
+    expect(response.status).toBe(403);
+    expect(repository.getDashboard).not.toHaveBeenCalled();
+  });
+
+  test('forbids customer accounts even if a matching staff admin role exists', async () => {
+    const { baseUrl, repository } = await startServer('admin');
+
+    const response = await fetch(`${baseUrl}/admin/dashboard`, {
+      headers: { 'x-user-id': '42', 'x-user-type': 'customer' },
+    });
+
+    expect(response.status).toBe(403);
+    expect(repository.getDashboard).not.toHaveBeenCalled();
+  });
+
+  test('forbids staff whose role is not admin', async () => {
+    const { baseUrl, repository } = await startServer('STAFF');
+
+    const response = await fetch(`${baseUrl}/admin/dashboard`, {
+      headers: { 'x-user-id': '42', 'x-user-type': 'staff' },
     });
 
     expect(response.status).toBe(403);
@@ -106,7 +135,8 @@ describe('admin endpoints', () => {
     const response = await fetch(`${baseUrl}/admin/products/7/reorder`, {
       method: 'POST',
       headers: {
-        'x-customer-id': '42',
+        'x-user-id': '42',
+        'x-user-type': 'staff',
         'content-type': 'application/json',
       },
       body: JSON.stringify({ quantity: 9999 }),

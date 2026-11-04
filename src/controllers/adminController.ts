@@ -15,7 +15,7 @@ type AdminDataRepository = Pick<
   AdminRepository,
   'getDashboard' | 'reorderStock'
 >;
-type CustomerRoleRepository = Pick<LoginRepository, 'findRoleByCustomerId'>;
+type PrincipalRoleRepository = Pick<LoginRepository, 'findRoleByPrincipal'>;
 
 const periodSchema = z.enum(['today', 'week', 'month']);
 const productIdSchema = z
@@ -27,7 +27,7 @@ const productIdSchema = z
 export class AdminController {
   constructor(
     private readonly repository: AdminDataRepository,
-    private readonly customers: CustomerRoleRepository,
+    private readonly accounts: PrincipalRoleRepository,
   ) {}
 
   dashboard = async (req: Request, res: Response): Promise<void> => {
@@ -72,19 +72,23 @@ export class AdminController {
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
-    const customerID = res.locals.customerId;
-    if (customerID === undefined) {
+    const principal = res.locals.principal;
+    if (!principal) {
       res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+    if (principal.type !== 'staff') {
+      res.status(403).json({ error: 'Administrator access required' });
       return;
     }
 
     try {
-      const role = await this.customers.findRoleByCustomerId(customerID);
+      const role = await this.accounts.findRoleByPrincipal(principal);
       if (role === null) {
         res.status(401).json({ error: 'Account no longer exists' });
         return;
       }
-      if (role !== 'admin') {
+      if (role.toLowerCase() !== 'admin') {
         res.status(403).json({ error: 'Administrator access required' });
         return;
       }

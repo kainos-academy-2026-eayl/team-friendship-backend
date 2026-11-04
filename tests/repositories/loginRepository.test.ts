@@ -20,4 +20,24 @@ describe('LoginRepository.findCustomerByEmail', () => {
     );
     expect(values).toEqual(['a_ice%\\@example.com']);
   });
+
+  describe('LoginRepository.findStaffByEmail', () => {
+    test('uses a case-insensitive parameterized email lookup', async () => {
+      const $queryRaw = vi.fn().mockResolvedValue([]);
+      const repository = new LoginRepository({
+        $queryRaw,
+      } as unknown as PrismaClient);
+
+      await repository.findStaffByEmail('admin@example.com');
+
+      expect($queryRaw).toHaveBeenCalledOnce();
+      const call = $queryRaw.mock.calls[0];
+      if (!call) throw new Error('Expected a Prisma query');
+      const [strings, ...values] = call;
+      expect(strings.join('?')).toContain(
+        'WHERE lower("staffEmail") = lower(?)',
+      );
+      expect(values).toEqual(['admin@example.com']);
+    });
+  });
 });

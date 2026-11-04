@@ -7,12 +7,13 @@ import { AccessTokenService } from '../../src/services/accessTokenService';
 
 const tokens = new AccessTokenService('a'.repeat(32));
 
-async function startServer(role: 'admin' | 'customer' | null = 'customer') {
+async function startServer(role: string | null = 'customer') {
   const app = express();
   app.use(
     '/',
     new AuthController(tokens, {
-      findRoleByCustomerId: async () => role,
+      findRoleByPrincipal: async (principal) =>
+        principal.type === 'staff' ? role : 'customer',
     }).router(),
   );
   const server = app.listen(0, '127.0.0.1');
@@ -40,16 +41,16 @@ describe('AuthController.requireAuth', () => {
     expect(await response.json()).toEqual({ customerId: 42, role: 'customer' });
   });
 
-  test('returns the database role for an authenticated admin', async () => {
+  test('returns the database role for an authenticated admin staff member', async () => {
     const baseUrl = await startServer('admin');
-    const token = await tokens.sign(42);
+    const token = await tokens.sign({ type: 'staff', id: 42 });
 
     const response = await fetch(`${baseUrl}/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ customerId: 42, role: 'admin' });
+    expect(await response.json()).toEqual({ staffID: 42, role: 'admin' });
   });
 
   test('returns 401 when the header is missing', async () => {

@@ -1,4 +1,5 @@
-import type { Customer, PrismaClient } from '../generated/prisma/client';
+import type { Customer, PrismaClient, Staff } from '../generated/prisma/client';
+import type { AuthPrincipal } from '../services/accessTokenService';
 
 export class LoginRepository {
   constructor(private readonly prisma: PrismaClient) {}
@@ -13,14 +14,29 @@ export class LoginRepository {
     return customer ?? null;
   }
 
-  async findRoleByCustomerId(
-    customerID: number,
-  ): Promise<'admin' | 'customer' | null> {
-    const customer = await this.prisma.customer.findUnique({
-      where: { customerID },
-      select: { role: true },
+  async findStaffByEmail(email: string): Promise<Staff | null> {
+    const [staff] = await this.prisma.$queryRaw<Staff[]>`
+      SELECT *
+      FROM "Staff"
+      WHERE lower("staffEmail") = lower(${email})
+      LIMIT 1
+    `;
+    return staff ?? null;
+  }
+
+  async findRoleByPrincipal(principal: AuthPrincipal): Promise<string | null> {
+    if (principal.type === 'customer') {
+      const customer = await this.prisma.customer.findUnique({
+        where: { customerID: principal.id },
+        select: { customerID: true },
+      });
+      return customer ? 'customer' : null;
+    }
+
+    const staff = await this.prisma.staff.findUnique({
+      where: { staffID: principal.id },
+      select: { staffRole: true },
     });
-    if (!customer) return null;
-    return customer.role === 'ADMIN' ? 'admin' : 'customer';
+    return staff?.staffRole.toLowerCase() ?? null;
   }
 }

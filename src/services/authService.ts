@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { RefreshTokenRepository } from '../repositories/refreshTokenRepository';
-import type { AccessTokenService } from './accessTokenService';
+import type { AccessTokenService, AuthPrincipal } from './accessTokenService';
 
 export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -39,7 +39,11 @@ export class AuthService {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  async startSession(customerId: number): Promise<AuthTokens> {
+  async startSession(principal: AuthPrincipal | number): Promise<AuthTokens> {
+    const identity =
+      typeof principal === 'number'
+        ? { type: 'customer' as const, id: principal }
+        : principal;
     const refreshToken = generateRefreshToken();
     const refreshExpiresAt = new Date(
       this.now().getTime() + REFRESH_TOKEN_TTL_MS,
@@ -47,13 +51,13 @@ export class AuthService {
 
     await this.refreshTokens.create({
       tokenHash: hashToken(refreshToken),
-      customerId,
+      principal: identity,
       familyId: randomUUID(),
       expiresAt: refreshExpiresAt,
     });
 
     return {
-      accessToken: await this.accessTokens.sign(customerId),
+      accessToken: await this.accessTokens.sign(identity),
       refreshToken,
       refreshExpiresAt,
     };
@@ -72,7 +76,7 @@ export class AuthService {
     }
 
     return {
-      accessToken: await this.accessTokens.sign(result.customerId),
+      accessToken: await this.accessTokens.sign(result.principal),
       refreshToken: nextRefreshToken,
       refreshExpiresAt: result.expiresAt,
     };

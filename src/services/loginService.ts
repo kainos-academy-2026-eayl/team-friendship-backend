@@ -1,9 +1,20 @@
 import argon2 from 'argon2';
-import type { Customer } from '../generated/prisma/client';
+import type { Customer, Staff } from '../generated/prisma/client';
 import type { LoginRepository } from '../repositories/loginRepository';
+import type { AuthPrincipal } from './accessTokenService';
 import { LoginAttemptLimiter } from './loginAttemptLimiter';
 
 export type CustomerDetails = Omit<Customer, 'customerPassword'>;
+export type StaffDetails = Omit<Staff, 'staffPassword'>;
+export type LoginAccount =
+  | {
+      principal: AuthPrincipal & { type: 'customer' };
+      customer: CustomerDetails & { role: 'customer' };
+    }
+  | {
+      principal: AuthPrincipal & { type: 'staff' };
+      customer: StaffDetails & { role: string };
+    };
 
 export const INVALID_CREDENTIALS_MESSAGE = 'Your email or password is invalid';
 
@@ -24,9 +35,12 @@ export class TooManyAttemptsError extends Error {
   }
 }
 
-type LoginRepositoryContract = Pick<LoginRepository, 'findCustomerByEmail'>;
+type LoginRepositoryContract = Pick<
+  LoginRepository,
+  'findCustomerByEmail' | 'findStaffByEmail'
+>;
 
-// Verified when no customer matches, so unknown emails take as long as wrong passwords.
+// Verified when neither account type matches, so unknown emails take as long as wrong passwords.
 const DUMMY_HASH_PROMISE = argon2.hash('dummy-password-for-timing');
 
 async function verifyPassword(hash: string, password: string) {
@@ -48,13 +62,28 @@ export class LoginService {
     email: string,
     password: string,
     clientId: string,
-  ): Promise<CustomerDetails> {
+  ): Promise<LoginAccount> {
     const clientKey = `client:${clientId}`;
     const accountKey = `account:${email.toLowerCase()}`;
 
     const check = this.limiter.consume([clientKey, accountKey]);
     if (!check.allowed) {
       throw new TooManyAttemptsError(check.retryAfterSeconds);
+    }
+
+    const staff = await this.repository.findStaffByEmail(email);
+    if (staff) {
+      if (!(await verifyPassword(staff.staffPassword, password))) {
+        throw new InvalidCredentialsError();
+      }
+
+      this.limiter.reset(accountKey);
+      this.limiter.refund(clientKey, check.reservation);
+      const { staffPassword: _staffPassword, ...details } = staff;
+      return {
+        principal: { type: 'staff', id: staff.staffID },
+        customer: { ...details, role: staff.staffRole.toLowerCase() },
+      };
     }
 
     const customer = await this.repository.findCustomerByEmail(email);
@@ -73,6 +102,9 @@ export class LoginService {
     this.limiter.refund(clientKey, check.reservation);
 
     const { customerPassword: _customerPassword, ...details } = customer;
-    return details;
+    return {
+      principal: { type: 'customer', id: details.customerID },
+      customer: { ...details, role: 'customer' },
+    };
   }
 }

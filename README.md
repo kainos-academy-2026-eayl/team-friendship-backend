@@ -48,14 +48,23 @@ Use `npm ci` rather than `npm install`. It installs the exact versions recorded 
 ## Admin portal API
 
 The backend exposes the protected endpoints used by the frontend admin portal:
-- `POST /login` returns the database-backed customer role as `customer.role`
-  (`admin` or `customer`).
-- `GET /me` returns the authenticated customer ID and current database role.
+- `POST /login` authenticates customer and staff accounts. Its
+  `customer.role` response field is `customer` for customers and the staff
+  member's role for staff accounts.
+- `GET /me` returns the authenticated customer or staff ID and current role
+  from the database.
 - `GET /admin/dashboard?period=today|week|month` returns sales metrics and all
   products with fewer than five units in stock. Sales periods use the
   `Europe/London` timezone; only `paid` and `completed` orders count as sales.
 - `POST /admin/products/:id/reorder` atomically adds 20 units to the product
-  stock. Only authenticated admin accounts may access either admin endpoint.
+  stock. Only a staff account whose `staffRole` is `ADMIN` may access either
+  admin endpoint; customer accounts and other staff roles are denied.
+
+Staff accounts are stored separately from customers and include a unique email
+and an Argon2-hashed password. The staff availability field is informational and
+does not determine admin authorization. The staff-account migration transfers
+existing customer accounts with the `ADMIN` role, including their active
+refresh-token sessions, before removing the customer role column.
 
 Apply pending migrations before starting the updated backend:
 
@@ -70,10 +79,10 @@ administrator account with:
 npm run admin:provision
 ```
 
-The script creates or updates `admin@friendshop.com`, stores an Argon2 password
-hash, and assigns the admin role. It does not store the password in the source
-code. Other accounts default to the customer role and registration cannot set
-or change roles.
+The script creates or updates `admin@friendshop.com` in the `Staff` table,
+stores an Argon2 password hash, and assigns the `ADMIN` staff role. It does not
+store the password in the source code. Customer registration cannot create or
+change staff roles.
 
 Each order line now stores its purchase-time unit price so future revenue is
 based on the order price rather than the current product price. The migration

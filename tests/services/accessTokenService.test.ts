@@ -13,10 +13,22 @@ describe('AccessTokenService', () => {
     expect(() => new AccessTokenService('short')).toThrow(/at least 32 bytes/);
   });
 
-  test('signs a token that verifies back to the customer id', async () => {
+  test('signs and verifies a customer principal', async () => {
     const token = await service.sign(42);
 
-    await expect(service.verify(token)).resolves.toBe(42);
+    await expect(service.verify(token)).resolves.toEqual({
+      type: 'customer',
+      id: 42,
+    });
+  });
+
+  test('signs and verifies a staff principal without ID collisions', async () => {
+    const token = await service.sign({ type: 'staff', id: 42 });
+
+    await expect(service.verify(token)).resolves.toEqual({
+      type: 'staff',
+      id: 42,
+    });
   });
 
   test('rejects a token signed with a different secret', async () => {

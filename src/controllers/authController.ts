@@ -5,12 +5,15 @@ import {
   Router,
 } from 'express';
 import type { LoginRepository } from '../repositories/loginRepository';
-import type { AccessTokenService } from '../services/accessTokenService';
+import type {
+  AccessTokenService,
+  AuthPrincipal,
+} from '../services/accessTokenService';
 
 declare global {
   namespace Express {
     interface Locals {
-      customerId?: number;
+      principal?: AuthPrincipal;
     }
   }
 }
@@ -19,12 +22,12 @@ const BEARER_PATTERN =
   /^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/i;
 
 type AccessTokenVerifier = Pick<AccessTokenService, 'verify'>;
-type CustomerRoleRepository = Pick<LoginRepository, 'findRoleByCustomerId'>;
+type PrincipalRoleRepository = Pick<LoginRepository, 'findRoleByPrincipal'>;
 
 export class AuthController {
   constructor(
     private readonly tokens: AccessTokenVerifier,
-    private readonly customers: CustomerRoleRepository,
+    private readonly accounts: PrincipalRoleRepository,
   ) {}
 
   requireAuth = async (
@@ -42,7 +45,7 @@ export class AuthController {
     }
 
     try {
-      res.locals.customerId = await this.tokens.verify(token);
+      res.locals.principal = await this.tokens.verify(token);
     } catch {
       res
         .status(401)
@@ -56,20 +59,26 @@ export class AuthController {
 
   me = async (_req: Request, res: Response): Promise<void> => {
     try {
-      const customerId = res.locals.customerId;
-      if (customerId === undefined) {
+      const principal = res.locals.principal;
+      if (!principal) {
         res.status(401).json({ error: 'Authentication required' });
         return;
       }
 
-      const role = await this.customers.findRoleByCustomerId(customerId);
+      const role = await this.accounts.findRoleByPrincipal(principal);
       if (!role) {
         res.status(401).json({ error: 'Account no longer exists' });
         return;
       }
-      res.status(200).json({ customerId, role });
+      res
+        .status(200)
+        .json(
+          principal.type === 'staff'
+            ? { staffID: principal.id, role }
+            : { customerId: principal.id, role },
+        );
     } catch (error) {
-      console.error('Unable to load authenticated customer', error);
+      console.error('Unable to load authenticated account', error);
       res.status(500).json({ error: 'Internal server error' });
     }
   };

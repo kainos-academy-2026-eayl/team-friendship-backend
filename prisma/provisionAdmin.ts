@@ -20,22 +20,20 @@ if (email !== 'admin@friendshop.com') {
 const prisma = createPrismaClient();
 
 try {
-  const customerPassword = await argon2.hash(password);
-  await prisma.customer.upsert({
-    where: { customerEmail: email },
+  const staffPassword = await argon2.hash(password);
+  await prisma.staff.upsert({
+    where: { staffEmail: email },
     create: {
-      customerForename: 'Friendshop',
-      customerSurname: 'Administrator',
-      address: 'Admin account',
-      postcode: 'N/A',
-      customerEmail: email,
-      customerPhone: 'N/A',
-      customerPassword,
-      role: 'ADMIN',
+      staffForename: 'Friendshop',
+      staffSurname: 'Administrator',
+      staffRole: 'ADMIN',
+      staffavailability: 'AVAILABLE',
+      staffEmail: email,
+      staffPassword,
     },
-    update: { customerPassword, role: 'ADMIN' },
+    update: { staffPassword, staffRole: 'ADMIN' },
   });
-  console.log(`Administrator account provisioned for ${email}.`);
+  console.log(`Administrator staff account provisioned for ${email}.`);
 } finally {
   await prisma.$disconnect();
 }

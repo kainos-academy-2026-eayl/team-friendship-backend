@@ -12,11 +12,6 @@ datasource db {
   provider = "postgresql"
 }
 
-enum CustomerRole {
-  CUSTOMER
-  ADMIN
-}
-
 model Customer {
   customerID          Int                  @id @default(autoincrement())
   customerForename    String
@@ -26,18 +21,30 @@ model Customer {
   customerEmail       String               @unique
   customerPhone       String
   customerPassword    String
-  role                CustomerRole         @default(CUSTOMER)
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
-  orders           Order[]
+  orders              Order[]
+}
+
+model Staff {
+  staffID             Int            @id @default(autoincrement())
+  staffForename       String
+  staffSurname        String
+  staffRole           String         @default("STAFF")
+  staffavailability   String         @default("AVAILABLE")
+  staffEmail          String         @unique
+  staffPassword       String
+  refreshTokens       RefreshToken[]
 }
 
 model RefreshToken {
   id                  String               @id @default(uuid())
   tokenHash           String               @unique
   familyId            String
-  customerID          Int
-  customer            Customer             @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
+  customerID          Int?
+  customer            Customer?            @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
+  staffID             Int?
+  staff               Staff?               @relation(fields: [staffID], references: [staffID], onDelete: Cascade)
   expiresAt           DateTime
   revokedAt           DateTime?
   replacedById        String?
@@ -45,6 +52,7 @@ model RefreshToken {
   passwordResetTokens PasswordResetToken[]
 
   @@index([customerID])
+  @@index([staffID])
   @@index([familyId])
 }
 

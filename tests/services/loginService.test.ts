@@ -1,6 +1,6 @@
 import argon2 from 'argon2';
 import { beforeAll, describe, expect, test } from 'vitest';
-import type { Customer } from '../../src/generated/prisma/client';
+import type { Customer, Staff } from '../../src/generated/prisma/client';
 import { LoginAttemptLimiter } from '../../src/services/loginAttemptLimiter';
 import {
   INVALID_CREDENTIALS_MESSAGE,
@@ -12,10 +12,12 @@ import {
 const PASSWORD = 'Password123!';
 const CLIENT = '203.0.113.1';
 let customer: Customer;
+let staff: Staff;
 
 function createService(
   found: Customer | null,
   limiter = new LoginAttemptLimiter(),
+  foundStaff: Staff | null = null,
 ) {
   let lookups = 0;
   const service = new LoginService(
@@ -24,6 +26,7 @@ function createService(
         lookups += 1;
         return found;
       },
+      findStaffByEmail: async () => foundStaff,
     },
     limiter,
   );
@@ -51,6 +54,15 @@ beforeAll(async () => {
     customerPhone: '07123456789',
     customerPassword: await argon2.hash(PASSWORD),
   };
+  staff = {
+    staffID: 2,
+    staffForename: 'Grace',
+    staffSurname: 'Hopper',
+    staffRole: 'ADMIN',
+    staffavailability: 'AVAILABLE',
+    staffEmail: 'admin@example.com',
+    staffPassword: await argon2.hash(PASSWORD),
+  };
 });
 
 describe('LoginService.login', () => {
@@ -61,11 +73,42 @@ describe('LoginService.login', () => {
       CLIENT,
     );
 
-    expect(result).not.toHaveProperty('customerPassword');
+    expect(result.customer).not.toHaveProperty('customerPassword');
     expect(result).toMatchObject({
-      customerID: 1,
-      customerEmail: 'ada@example.com',
+      principal: { type: 'customer', id: 1 },
+      customer: {
+        customerID: 1,
+        customerEmail: 'ada@example.com',
+        role: 'customer',
+      },
     });
+  });
+
+  test('authenticates staff and returns their role without exposing the password', async () => {
+    const result = await createService(
+      customer,
+      undefined,
+      staff,
+    ).service.login('admin@example.com', PASSWORD, CLIENT);
+
+    expect(result).toMatchObject({
+      principal: { type: 'staff', id: 2 },
+      customer: {
+        staffEmail: 'admin@example.com',
+        staffRole: 'ADMIN',
+        role: 'admin',
+      },
+    });
+    expect(result.customer).not.toHaveProperty('staffPassword');
+  });
+
+  test('rejects invalid staff credentials without falling back to customer lookup', async () => {
+    const { service, lookups } = createService(customer, undefined, staff);
+
+    await expect(
+      service.login('admin@example.com', 'wrong', CLIENT),
+    ).rejects.toBeInstanceOf(InvalidCredentialsError);
+    expect(lookups()).toBe(0);
   });
 
   test('rejects an invalid password', async () => {
@@ -130,7 +173,7 @@ describe('LoginService.login attempt limits', () => {
     ).rejects.toBeInstanceOf(TooManyAttemptsError);
     await expect(
       service.login('ada@example.com', PASSWORD, 'other-client'),
-    ).resolves.toMatchObject({ customerID: 1 });
+    ).resolves.toMatchObject({ principal: { id: 1, type: 'customer' } });
   });
 
   test('a successful login resets the account count', async () => {
@@ -163,7 +206,7 @@ describe('LoginService.login attempt limits', () => {
 
     await expect(
       service.login('ada@example.com', PASSWORD, CLIENT),
-    ).resolves.toMatchObject({ customerID: 1 });
+    ).resolves.toMatchObject({ principal: { id: 1, type: 'customer' } });
   });
 
   test('does not refund a client attempt from an expired window', () => {
