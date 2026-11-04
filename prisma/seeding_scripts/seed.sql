@@ -3,29 +3,32 @@ DELETE FROM "Product";
 INSERT INTO "Product"(
     "productName",
     "productDescription",
+    "productCategory",
     "productPrice",
     "productImage",
     "productStock"
 )
 VALUES
-    ('Marble', 'Bold and shiny, perfect for all your taskmaster needs', 30.88, 'products_images/marble.jpeg', 10),
-    ('Pool Ball', 'Perfect for your pool table adventures', 29.99, 'products_images/pool_ball.jpg', 15),
-    ('Trampoline', 'Fun for all ages, perfect for outdoor play', 1.09, 'products_images/trampoline.jpeg', 20),
-    ('Pokemon', 'Catch them all with this exciting collectible', 45.00, 'products_images/pokemon.jpeg', 5),
-    ('Callum', 'A unique collectible for fans of Callum', 0.38, 'products_images/callum.jpeg', 50),
-    ('Lee', 'Perfect for collectors of Lee memorabilia', 30000.00, 'products_images/lee.jpeg', 1),
-    ('Teddy', 'Bold and shiny, perfect for all your taskmaster needs', 62.23, 'products_images/teddy.jpeg', 8),
-    ('Jacks', 'Classic game for all ages', 0.99, 'products_images/jacks.jpg', 25),
-    ('Playing Cards', 'Fun for all ages, perfect for outdoor play', 1.09, 'products_images/playing_cards.jpeg', 30),
-    ('Furby', 'It will never leave you', 100.00, 'products_images/furby.jpeg', 3),
-    ('Lego', 'Singular lego', 0.38, 'products_images/lego.jpeg', 40),
-    ('Barbie', 'Classic doll for imaginative play', 15.00, 'products_images/barbie.jpeg', 12),
-    ('David', 'Batteries not included', 0.39, 'products_images/david.jpeg', 60);
+    ('Bag of Marbles', 'Bold and shiny, perfect for all your taskmaster needs', 'Toys', 9.99, 'bagOfMarbles.webp', 25),
+    ('Pool Set', 'Complete pool set for hours of fun', 'Toys', 49.99, 'poolSet.webp', 10),
+    ('Hula Hoop', 'Classic toy for outdoor fun', 'Toys', 14.99, 'hulaHoop.webp', 25),
+    ('Furby', 'Interactive electronic toy', 'Toys', 99.99, 'furby.webp', 10),
+    ('Lego Set A', 'Creative building blocks for endless fun', 'Lego', 59.99, 'legoSet1.webp', 15),
+    ('Lego Set B', 'Creative building blocks set', 'Lego', 79.99, 'legoSet2.webp', 20),
+    ('Lego Set C', 'Creative building blocks set', 'Lego', 89.99, 'legoSet3.webp', 25),
+    ('Lego Set D', 'Creative building blocks set', 'Lego', 99.99, 'legoSet4.webp', 30),
+    ('Monopoly', 'Classic board game for family fun', 'Board Games', 29.99, 'monopoly.webp', 15),
+    ('Cluedo', 'Classic detective board game', 'Board Games', 24.99, 'cluedo.webp', 15),
+    ('Game of Life', 'Classic board game for family fun', 'Board Games', 34.99, 'gameOfLife.webp', 15),
+    ('Catan', 'Popular strategy board game', 'Board Games', 39.99, 'catan.webp', 15),
+    ('Barbie A', 'Classic Barbie doll', 'Dolls', 19.99, 'barbieA.webp', 15),
+    ('Barbie B', 'Classic Barbie doll', 'Dolls', 19.99, 'barbieB.webp', 15),
+    ('Monster High A', 'Classic Monster High doll', 'Dolls', 19.99, 'monsterHighA.webp', 15),
+    ('Monster High B', 'Classic Monster High doll', 'Dolls', 19.99, 'monsterHighB.webp', 15);
 
 DELETE FROM "Customer";
 
 INSERT INTO "Customer"(
-    "customerID",
     "customerForename",
     "customerSurname",
     "address",
@@ -40,3 +43,30 @@ VALUES
     ('Alice', 'Smith', '456 Down Street', 'BT16 BBB', 'alicesmith@example.com', '0112233445', '$argon2id$v=19$m=19456,t=2,p=1$ymunqbuaaQNwQdoplFjX1w$c0vBdUnp96Ewf+jPRHb9Pf5Fj4XIZlMtH9GGSQ0eerw'),
     ('Bob', 'Johnson', '789 Left Street', 'BT16 CCC', 'bobjohnson@example.com', '0223344556', '$argon2id$v=19$m=19456,t=2,p=1$h/4V3vXvm0ribX0Au9zjiw$r5JPK/5fQSAmxAwkAbKODohX8RYEtAV8NPIeZmDZOtI'),
     ('Greg', 'Heffley', '88 Burger Town', 'BT12 ABC', 'gregheffley@example.com', '0334455667', '$argon2id$v=19$m=19456,t=2,p=1$w1mKkfMCvhaJAn4JJO524w$QXcWumehXC1V5If+MnOFeVXgvRU/nnOGUTmqR35EKwo');
+
+DELETE FROM "OrderService";
+INSERT INTO "OrderService"(
+    "orderID",
+    "productID",
+    "quantity"
+)
+VALUES
+    (1, 1, 2),
+    (1, 2, 1),
+    (1, 3, 1),
+    (1, 4, 1),
+    (2, 1, 1),
+
+
+DELETE FROM "Order";
+INSERT INTO "Order"(
+    "orderID",
+    "customerID",
+    "status"
+)
+VALUES
+    (1, 1, 'pending'),
+    (2, 2, 'pending'),
+    (3, 3, 'pending'),
+    (4, 4, 'pending'),
+    (5, 5, 'pending');
