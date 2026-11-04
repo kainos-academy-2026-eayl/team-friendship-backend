@@ -2,14 +2,17 @@ import 'dotenv/config';
 import dotenv from 'dotenv';
 import { createApp } from './app';
 import { AuthController } from './controllers/authController';
+import { BasketController } from './controllers/basketController';
 import { LoginController } from './controllers/loginController';
 import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
+import { BasketRepository } from './repositories/basketRepository';
 import { LoginRepository } from './repositories/loginRepository';
 import { ProductRepository } from './repositories/productRepository';
 import { RefreshTokenRepository } from './repositories/refreshTokenRepository';
 import { AccessTokenService } from './services/accessTokenService';
 import { AuthService } from './services/authService';
+import { BasketService } from './services/basketService';
 import { LoginService } from './services/loginService';
 import { ProductService } from './services/productService';
 
@@ -49,6 +52,11 @@ const productController = new ProductController(
   new ProductService(new ProductRepository(prisma)),
 );
 app.use('/', productController.router());
+
+const basketController = new BasketController(
+  new BasketService(new BasketRepository(prisma)),
+);
+app.use('/', basketController.router());
 
 // Everything below this comment requires authentication
 app.use(authController.requireAuth);
