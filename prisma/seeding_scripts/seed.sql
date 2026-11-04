@@ -40,3 +40,30 @@ VALUES
     ('Alice', 'Smith', '456 Down Street', 'BT16 BBB', 'alicesmith@example.com', '0112233445', '$argon2id$v=19$m=19456,t=2,p=1$ymunqbuaaQNwQdoplFjX1w$c0vBdUnp96Ewf+jPRHb9Pf5Fj4XIZlMtH9GGSQ0eerw'),
     ('Bob', 'Johnson', '789 Left Street', 'BT16 CCC', 'bobjohnson@example.com', '0223344556', '$argon2id$v=19$m=19456,t=2,p=1$h/4V3vXvm0ribX0Au9zjiw$r5JPK/5fQSAmxAwkAbKODohX8RYEtAV8NPIeZmDZOtI'),
     ('Greg', 'Heffley', '88 Burger Town', 'BT12 ABC', 'gregheffley@example.com', '0334455667', '$argon2id$v=19$m=19456,t=2,p=1$w1mKkfMCvhaJAn4JJO524w$QXcWumehXC1V5If+MnOFeVXgvRU/nnOGUTmqR35EKwo');
+
+DELETE FROM "OrderService";
+INSERT INTO "OrderService"(
+    "orderID",
+    "productID",
+    "quantity"
+)
+VALUES
+    (1, 1, 2),
+    (1, 2, 1),
+    (1, 3, 1),
+    (1, 4, 1),
+    (2, 1, 1),
+
+
+DELETE FROM "Order";
+INSERT INTO "Order"(
+    "orderID",
+    "customerID",
+    "status"
+)
+VALUES
+    (1, 1, 'pending'),
+    (2, 2, 'pending'),
+    (3, 3, 'pending'),
+    (4, 4, 'pending'),
+    (5, 5, 'pending');
