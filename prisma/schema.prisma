@@ -22,6 +22,7 @@ model Customer {
   customerPhone    String
   customerPassword String
   passwordResetTokens PasswordResetToken[]
+  orders           Order[]
 }
 
 model PasswordResetToken {
@@ -42,4 +43,24 @@ model Product {
   productPrice       Float
   productImage       String
   productStock       Int
+  orderServices      OrderService[]
+}
+
+model Order {
+  orderID       Int            @id @default(autoincrement())
+  customerID    Int
+  dateCreated   DateTime       @default(now())
+  status        String
+  customer      Customer       @relation(fields: [customerID], references: [customerID])
+  orderServices OrderService[]
+}
+
+model OrderService {
+  orderID   Int
+  productID Int
+  quantity  Int
+  order     Order   @relation(fields: [orderID], references: [orderID])
+  product   Product @relation(fields: [productID], references: [productID])
+
+  @@id([orderID, productID])
 }
