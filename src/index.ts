@@ -3,14 +3,17 @@ import dotenv from 'dotenv';
 import { createApp } from './app';
 import { AuthController } from './controllers/authController';
 import { LoginController } from './controllers/loginController';
+import { OrderController } from './controllers/orderController';
 import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
 import { LoginRepository } from './repositories/loginRepository';
+import { OrderRepository } from './repositories/orderRepository';
 import { ProductRepository } from './repositories/productRepository';
 import { RefreshTokenRepository } from './repositories/refreshTokenRepository';
 import { AccessTokenService } from './services/accessTokenService';
 import { AuthService } from './services/authService';
 import { LoginService } from './services/loginService';
+import { OrderService } from './services/orderService';
 import { ProductService } from './services/productService';
 
 if (!process.env.PORT) {
@@ -54,6 +57,10 @@ app.use('/', productController.router());
 app.use(authController.requireAuth);
 
 //Order history, order confirmation and checkout will require auth
+const orderController = new OrderController(
+  new OrderService(new OrderRepository(prisma)),
+);
+app.use('/', orderController.router());
 
 // Keep everything below this comment at the bottom of the file
 const server = app.listen(PORT, HOST, () => {
