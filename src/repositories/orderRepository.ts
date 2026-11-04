@@ -27,7 +27,9 @@ export class OrderRepository {
 
   create(customerID: number, items: OrderItem[]): Promise<OrderWithServices> {
     return this.prisma.$transaction(async (tx) => {
-      for (const { productID, quantity } of items) {
+      // Iterate over a copy sorted by productID so every order
+      // acquires product locks in the same order.
+      for (const { productID, quantity } of [...items].sort((a, b) => a.productID - b.productID,)) {
         // Conditional decrement prevents overselling when orders race for the same stock.
         const { count } = await tx.product.updateMany({
           where: { productID, productStock: { gte: quantity } },
