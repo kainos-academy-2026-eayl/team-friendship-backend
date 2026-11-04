@@ -25,6 +25,7 @@ model Customer {
   passwordResetTokens PasswordResetToken[]
 
   basketItems Basket[]
+  orders           Order[]
 }
 
 model RefreshToken {
@@ -60,11 +61,32 @@ model Product {
   productID          Int    @id @default(autoincrement())
   productName        String
   productDescription String
+  productCategory    String
   productPrice       Float
   productImage       String
   productStock       Int
 
   basketItems Basket[]
+  orderServices      OrderService[]
+}
+
+model Order {
+  orderID       Int            @id @default(autoincrement())
+  customerID    Int
+  dateCreated   DateTime       @default(now())
+  status        String
+  customer      Customer       @relation(fields: [customerID], references: [customerID])
+  orderServices OrderService[]
+}
+
+model OrderService {
+  orderID   Int
+  productID Int
+  quantity  Int
+  order     Order   @relation(fields: [orderID], references: [orderID])
+  product   Product @relation(fields: [productID], references: [productID])
+
+  @@id([orderID, productID])
 }
 
 model Basket {
