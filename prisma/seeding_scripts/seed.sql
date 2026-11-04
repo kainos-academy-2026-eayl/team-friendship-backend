@@ -1,4 +1,7 @@
+DELETE FROM "OrderService";
+DELETE FROM "Order";
 DELETE FROM "Product";
+DELETE FROM "Customer";
 
 INSERT INTO "Product"(
     "productName",
@@ -26,8 +29,6 @@ VALUES
     ('Monster High A', 'Classic Monster High doll', 'Dolls', 19.99, 'monsterHighA.webp', 15),
     ('Monster High B', 'Classic Monster High doll', 'Dolls', 19.99, 'monsterHighB.webp', 15);
 
-DELETE FROM "Customer";
-
 INSERT INTO "Customer"(
     "customerForename",
     "customerSurname",
@@ -44,21 +45,6 @@ VALUES
     ('Bob', 'Johnson', '789 Left Street', 'BT16 CCC', 'bobjohnson@example.com', '0223344556', '$argon2id$v=19$m=19456,t=2,p=1$h/4V3vXvm0ribX0Au9zjiw$r5JPK/5fQSAmxAwkAbKODohX8RYEtAV8NPIeZmDZOtI'),
     ('Greg', 'Heffley', '88 Burger Town', 'BT12 ABC', 'gregheffley@example.com', '0334455667', '$argon2id$v=19$m=19456,t=2,p=1$w1mKkfMCvhaJAn4JJO524w$QXcWumehXC1V5If+MnOFeVXgvRU/nnOGUTmqR35EKwo');
 
-DELETE FROM "OrderService";
-INSERT INTO "OrderService"(
-    "orderID",
-    "productID",
-    "quantity"
-)
-VALUES
-    (1, 1, 2),
-    (1, 2, 1),
-    (1, 3, 1),
-    (1, 4, 1),
-    (2, 1, 1),
-
-
-DELETE FROM "Order";
 INSERT INTO "Order"(
     "orderID",
     "customerID",
@@ -70,3 +56,20 @@ VALUES
     (3, 3, 'pending'),
     (4, 4, 'pending'),
     (5, 5, 'pending');
+
+INSERT INTO "OrderService"(
+    "orderID",
+    "productID",
+    "quantity",
+    "unitPrice"
+)
+SELECT order_line."orderID", order_line."productID", order_line.quantity,
+       product."productPrice"::DECIMAL(10, 2)
+FROM (VALUES
+    (1, 1, 2),
+    (1, 2, 1),
+    (1, 3, 1),
+    (1, 4, 1),
+    (2, 1, 1)
+) AS order_line("orderID", "productID", quantity)
+JOIN "Product" AS product ON product."productID" = order_line."productID";

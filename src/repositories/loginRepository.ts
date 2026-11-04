@@ -12,4 +12,15 @@ export class LoginRepository {
     `;
     return customer ?? null;
   }
+
+  async findRoleByCustomerId(
+    customerID: number,
+  ): Promise<'admin' | 'customer' | null> {
+    const customer = await this.prisma.customer.findUnique({
+      where: { customerID },
+      select: { role: true },
+    });
+    if (!customer) return null;
+    return customer.role === 'ADMIN' ? 'admin' : 'customer';
+  }
 }

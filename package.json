@@ -11,6 +11,7 @@
     "lint:fix": "biome check --write --error-on-warnings .",
     "lint:unsafe": "biome check --write --error-on-warnings --unsafe .",
     "prisma:generate": "prisma generate",
+    "admin:provision": "tsx prisma/provisionAdmin.ts",
     "test": "vitest run",
     "prepare": "node .husky/install.mjs",
     "predev": "prisma generate",

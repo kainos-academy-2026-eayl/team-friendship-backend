@@ -62,7 +62,10 @@ export class LoginController {
     );
     const tokens = await this.authService.startSession(customer.customerID);
 
-    this.sendTokens(res, tokens, { message: 'Login successful', customer });
+    this.sendTokens(res, tokens, {
+      message: 'Login successful',
+      customer: { ...customer, role: customer.role.toLowerCase() },
+    });
   };
 
   refresh = async (req: Request, res: Response): Promise<void> => {

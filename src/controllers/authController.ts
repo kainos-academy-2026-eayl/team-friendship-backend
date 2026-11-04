@@ -4,6 +4,7 @@ import {
   type Response,
   Router,
 } from 'express';
+import type { LoginRepository } from '../repositories/loginRepository';
 import type { AccessTokenService } from '../services/accessTokenService';
 
 declare global {
@@ -18,9 +19,13 @@ const BEARER_PATTERN =
   /^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/i;
 
 type AccessTokenVerifier = Pick<AccessTokenService, 'verify'>;
+type CustomerRoleRepository = Pick<LoginRepository, 'findRoleByCustomerId'>;
 
 export class AuthController {
-  constructor(private readonly tokens: AccessTokenVerifier) {}
+  constructor(
+    private readonly tokens: AccessTokenVerifier,
+    private readonly customers: CustomerRoleRepository,
+  ) {}
 
   requireAuth = async (
     req: Request,
@@ -49,8 +54,24 @@ export class AuthController {
     next();
   };
 
-  me = (_req: Request, res: Response): void => {
-    res.status(200).json({ customerId: res.locals.customerId });
+  me = async (_req: Request, res: Response): Promise<void> => {
+    try {
+      const customerId = res.locals.customerId;
+      if (customerId === undefined) {
+        res.status(401).json({ error: 'Authentication required' });
+        return;
+      }
+
+      const role = await this.customers.findRoleByCustomerId(customerId);
+      if (!role) {
+        res.status(401).json({ error: 'Account no longer exists' });
+        return;
+      }
+      res.status(200).json({ customerId, role });
+    } catch (error) {
+      console.error('Unable to load authenticated customer', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   };
 
   router(): Router {

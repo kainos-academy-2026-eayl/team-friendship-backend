@@ -24,6 +24,7 @@ const customer: CustomerDetails = {
   postcode: 'BT1 1AA',
   customerEmail: 'ada@example.com',
   customerPhone: '07123456789',
+  role: 'CUSTOMER',
 };
 
 const tokens: AuthTokens = {
@@ -106,7 +107,7 @@ describe('POST /login', () => {
     expect(response.headers.get('set-cookie')).toBeNull();
     expect(await response.json()).toEqual({
       message: 'Login successful',
-      customer,
+      customer: { ...customer, role: 'customer' },
       accessToken: tokens.accessToken,
       tokenType: 'Bearer',
       expiresIn: 900,
@@ -131,6 +132,24 @@ describe('POST /login', () => {
     expect(await response.json()).toEqual({
       error: INVALID_CREDENTIALS_MESSAGE,
     });
+  });
+
+  test('returns the stored admin role for an admin login', async () => {
+    const baseUrl = await startServer(async () => ({
+      ...customer,
+      role: 'ADMIN',
+    }));
+
+    const response = await postLogin(baseUrl, {
+      email: 'admin@friendshop.com',
+      password: 'Password1!',
+    });
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      customer: { role: string };
+    };
+    expect(body.customer.role).toBe('admin');
   });
 
   test('returns 429 with Retry-After when attempts are exceeded', async () => {

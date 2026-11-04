@@ -45,6 +45,42 @@ curl http://localhost:3000/health
 
 Use `npm ci` rather than `npm install`. It installs the exact versions recorded in `package-lock.json`, so everyone on the team runs identical dependencies. Use `npm install` only when you are deliberately adding or upgrading a package.
 
+## Admin portal API
+
+The backend exposes the protected endpoints used by the frontend admin portal:
+- `POST /login` returns the database-backed customer role as `customer.role`
+  (`admin` or `customer`).
+- `GET /me` returns the authenticated customer ID and current database role.
+- `GET /admin/dashboard?period=today|week|month` returns sales metrics and all
+  products with fewer than five units in stock. Sales periods use the
+  `Europe/London` timezone; only `paid` and `completed` orders count as sales.
+- `POST /admin/products/:id/reorder` atomically adds 20 units to the product
+  stock. Only authenticated admin accounts may access either admin endpoint.
+
+Apply pending migrations before starting the updated backend:
+
+```sh
+npx prisma migrate deploy
+```
+
+Set `ADMIN_PASSWORD` in the local, git-ignored `.env` file, then provision the
+administrator account with:
+
+```sh
+npm run admin:provision
+```
+
+The script creates or updates `admin@friendshop.com`, stores an Argon2 password
+hash, and assigns the admin role. It does not store the password in the source
+code. Other accounts default to the customer role and registration cannot set
+or change roles.
+
+Each order line now stores its purchase-time unit price so future revenue is
+based on the order price rather than the current product price. The migration
+backfills existing lines from today's product price because historical prices
+were not previously stored; revenue for those older orders is therefore an
+estimate.
+
 ## Making it your own
 
 After clicking **Use this template** on GitHub and creating your own repository:
