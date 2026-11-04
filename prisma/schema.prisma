@@ -23,8 +23,8 @@ model Customer {
   customerPassword    String
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
-  orders              Order[]
 
+  orders      Order[]
   basketItems Basket[]
 }
 
@@ -58,15 +58,16 @@ model PasswordResetToken {
 }
 
 model Product {
-  productID          Int            @id @default(autoincrement())
+  productID          Int    @id @default(autoincrement())
   productName        String
   productDescription String
   productCategory    String
   productPrice       Float
   productImage       String
   productStock       Int
-  orderServices      OrderService[]
-  baskets            Basket[]
+
+  basketItems   Basket[]
+  orderServices OrderService[]
 }
 
 model Order {
@@ -85,8 +86,6 @@ model OrderService {
   order     Order   @relation(fields: [orderID], references: [orderID])
   product   Product @relation(fields: [productID], references: [productID])
 
-  basketItems Basket[]
-
   @@id([orderID, productID])
 }
 
@@ -97,11 +96,8 @@ model Basket {
   productID  Int
   quantity   Int
 
-  customer              Customer      @relation(fields: [customerID], references: [customerID])
-  product               Product       @relation(fields: [productID], references: [productID])
-  orderService          OrderService? @relation(fields: [orderServiceOrderID, orderServiceProductID], references: [orderID, productID])
-  orderServiceOrderID   Int?
-  orderServiceProductID Int?
+  customer Customer @relation(fields: [customerID], references: [customerID])
+  product  Product  @relation(fields: [productID], references: [productID])
 
   @@index([customerID])
   @@index([productID])
