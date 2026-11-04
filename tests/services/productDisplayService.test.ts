@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { test } from 'vitest';
 
 import {
-  DisplayProduct,
   ProductNotFoundError,
-} from '../../src/services/productDisplayService';
+  ProductService,
+} from '../../src/services/productService';
 
 const product = {
   productID: 40,
@@ -17,12 +17,15 @@ const product = {
 
 test('getProductById returns a product when it exists', async () => {
   const repository = {
+    async findAll() {
+      return [];
+    },
     async findById(productID: number) {
       return productID === 40 ? product : null;
     },
   };
 
-  const service = new DisplayProduct(repository);
+  const service = new ProductService(repository);
 
   const result = await service.getProductById(40);
 
@@ -31,24 +34,30 @@ test('getProductById returns a product when it exists', async () => {
 
 test('getProductById throws ProductNotFoundError when product does not exist', async () => {
   const repository = {
+    async findAll() {
+      return [];
+    },
     async findById() {
       return null;
     },
   };
 
-  const service = new DisplayProduct(repository);
+  const service = new ProductService(repository);
 
   await assert.rejects(() => service.getProductById(999), ProductNotFoundError);
 });
 
 test('getProductById throws ProductNotFoundError when the repository returns null', async () => {
   const repository = {
+    async findAll() {
+      return [];
+    },
     async findById() {
       return null;
     },
   };
 
-  const service = new DisplayProduct(repository);
+  const service = new ProductService(repository);
 
   await assert.rejects(
     () => service.getProductById(999),

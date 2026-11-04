@@ -3,8 +3,8 @@ import { once } from 'node:events';
 import express from 'express';
 import { onTestFinished, test } from 'vitest';
 
-import { ProductController } from '../../src/controllers/productDisplayController';
-import { ProductNotFoundError } from '../../src/services/productDisplayService';
+import { ProductController } from '../../src/controllers/productController';
+import { ProductNotFoundError } from '../../src/services/productService';
 
 const product = {
   productID: 40,
@@ -55,6 +55,9 @@ async function requestProduct(
 
 test('GET /products/:id returns the requested product', async () => {
   const service = {
+    async getAllProducts() {
+      return [];
+    },
     async getProductById(productID: number) {
       if (productID === 40) {
         return product;
@@ -75,6 +78,9 @@ test('GET /products/:id returns the requested product', async () => {
 
 test('GET /products/:id rejects non-numeric product ids', async () => {
   const service = {
+    async getAllProducts() {
+      return [];
+    },
     async getProductById() {
       throw new Error('Should not be called');
     },
@@ -94,6 +100,9 @@ test('GET /products/:id rejects non-numeric product ids', async () => {
 
 test('GET /products/:id returns 404 when product is missing', async () => {
   const service = {
+    async getAllProducts() {
+      return [];
+    },
     async getProductById(productID: number) {
       throw new ProductNotFoundError(productID);
     },
@@ -110,6 +119,9 @@ test('GET /products/:id returns 404 when product is missing', async () => {
 
 test('GET /products/:id returns 500 for unexpected errors', async () => {
   const service = {
+    async getAllProducts() {
+      return [];
+    },
     async getProductById() {
       throw new Error('Database failure');
     },
