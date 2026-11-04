@@ -4,6 +4,11 @@ import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { createApp } from '../../src/app';
 import { LoginController } from '../../src/controllers/loginController';
 import {
+  type AuthService,
+  type AuthTokens,
+  InvalidRefreshTokenError,
+} from '../../src/services/authService';
+import {
   type CustomerDetails,
   INVALID_CREDENTIALS_MESSAGE,
   InvalidCredentialsError,
@@ -21,15 +26,33 @@ const customer: CustomerDetails = {
   customerPhone: '07123456789',
 };
 
+const tokens: AuthTokens = {
+  accessToken: 'access.jwt.token',
+  refreshToken: 'refresh-token',
+  refreshExpiresAt: new Date('2030-01-08T00:00:00Z'),
+};
+
+type AuthContract = Pick<AuthService, 'startSession' | 'refresh' | 'logout'>;
+
+function fakeAuth(overrides: Partial<AuthContract> = {}): AuthContract {
+  return {
+    startSession: async () => tokens,
+    refresh: async () => tokens,
+    logout: async () => {},
+    ...overrides,
+  };
+}
+
 async function startServer(
   login: (
     email: string,
     password: string,
     clientId: string,
   ) => Promise<CustomerDetails>,
+  auth: AuthContract = fakeAuth(),
 ) {
   const app = createApp();
-  app.use('/', new LoginController({ login }).router());
+  app.use('/', new LoginController({ login }, auth).router());
   const server = app.listen(0, '127.0.0.1');
   onTestFinished(
     () =>
@@ -54,12 +77,21 @@ function postLogin(baseUrl: string, body: unknown) {
 }
 
 describe('POST /login', () => {
-  test('returns 200 and customer details for valid credentials', async () => {
+  test('returns 200, customer details and tokens for valid credentials', async () => {
     const calls: [string, string, string][] = [];
-    const baseUrl = await startServer(async (email, password, clientId) => {
-      calls.push([email, password, clientId]);
-      return customer;
-    });
+    const sessions: number[] = [];
+    const baseUrl = await startServer(
+      async (email, password, clientId) => {
+        calls.push([email, password, clientId]);
+        return customer;
+      },
+      fakeAuth({
+        startSession: async (customerId) => {
+          sessions.push(customerId);
+          return tokens;
+        },
+      }),
+    );
 
     const response = await postLogin(baseUrl, {
       email: '  ada@example.com ',
@@ -70,11 +102,19 @@ describe('POST /login', () => {
     expect(response.headers.get('access-control-allow-origin')).toBe(
       'http://localhost:8000',
     );
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('set-cookie')).toBeNull();
     expect(await response.json()).toEqual({
       message: 'Login successful',
       customer,
+      accessToken: tokens.accessToken,
+      tokenType: 'Bearer',
+      expiresIn: 900,
+      refreshToken: tokens.refreshToken,
+      refreshExpiresAt: tokens.refreshExpiresAt.toISOString(),
     });
     expect(calls).toEqual([['ada@example.com', 'Password123!', '127.0.0.1']]);
+    expect(sessions).toEqual([customer.customerID]);
   });
 
   test('returns 401 with a generic message for invalid credentials', async () => {
@@ -161,5 +201,110 @@ describe('POST /login', () => {
     };
     expect(body.details.email).toEqual(['Email is required']);
     expect(body.details.password).toEqual(['Password is required']);
+  });
+});
+
+function postAuth(baseUrl: string, path: string, body?: unknown) {
+  return fetch(`${baseUrl}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body ?? {}),
+  });
+}
+
+describe('POST /auth/refresh', () => {
+  test('rotates the refresh token and returns new tokens', async () => {
+    const received: string[] = [];
+    const baseUrl = await startServer(
+      async () => customer,
+      fakeAuth({
+        refresh: async (token) => {
+          received.push(token);
+          return tokens;
+        },
+      }),
+    );
+
+    const response = await postAuth(baseUrl, '/auth/refresh', {
+      refreshToken: 'old-token',
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(await response.json()).toEqual({
+      accessToken: tokens.accessToken,
+      tokenType: 'Bearer',
+      expiresIn: 900,
+      refreshToken: tokens.refreshToken,
+      refreshExpiresAt: tokens.refreshExpiresAt.toISOString(),
+    });
+    expect(received).toEqual(['old-token']);
+  });
+
+  test('returns 401 without calling the service when the token is missing', async () => {
+    let called = false;
+    const baseUrl = await startServer(
+      async () => customer,
+      fakeAuth({
+        refresh: async () => {
+          called = true;
+          return tokens;
+        },
+      }),
+    );
+
+    const response = await postAuth(baseUrl, '/auth/refresh');
+
+    expect(response.status).toBe(401);
+    expect(called).toBe(false);
+  });
+
+  test('returns 401 when the token is rejected', async () => {
+    const baseUrl = await startServer(
+      async () => customer,
+      fakeAuth({
+        refresh: async () => {
+          throw new InvalidRefreshTokenError();
+        },
+      }),
+    );
+
+    const response = await postAuth(baseUrl, '/auth/refresh', {
+      refreshToken: 'reused-token',
+    });
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({
+      error: new InvalidRefreshTokenError().message,
+    });
+  });
+});
+
+describe('POST /auth/logout', () => {
+  test('revokes the session', async () => {
+    const revoked: string[] = [];
+    const baseUrl = await startServer(
+      async () => customer,
+      fakeAuth({
+        logout: async (token) => {
+          revoked.push(token);
+        },
+      }),
+    );
+
+    const response = await postAuth(baseUrl, '/auth/logout', {
+      refreshToken: 'current-token',
+    });
+
+    expect(response.status).toBe(204);
+    expect(revoked).toEqual(['current-token']);
+  });
+
+  test('returns 204 when there is no token', async () => {
+    const baseUrl = await startServer(async () => customer);
+
+    const response = await postAuth(baseUrl, '/auth/logout');
+
+    expect(response.status).toBe(204);
   });
 });

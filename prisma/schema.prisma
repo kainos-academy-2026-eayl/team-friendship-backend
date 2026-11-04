@@ -13,24 +13,43 @@ datasource db {
 }
 
 model Customer {
-  customerID       Int    @id @default(autoincrement())
-  customerForename String
-  customerSurname  String
-  address          String
-  postcode         String
-  customerEmail    String @unique
-  customerPhone    String
-  customerPassword String
+  customerID          Int                  @id @default(autoincrement())
+  customerForename    String
+  customerSurname     String
+  address             String
+  postcode            String
+  customerEmail       String               @unique
+  customerPhone       String
+  customerPassword    String
+  refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
 }
 
+model RefreshToken {
+  id                  String               @id @default(uuid())
+  tokenHash           String               @unique
+  familyId            String
+  customerID          Int
+  customer            Customer             @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
+  expiresAt           DateTime
+  revokedAt           DateTime?
+  replacedById        String?
+  createdAt           DateTime             @default(now())
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([customerID])
+  @@index([familyId])
+}
+
 model PasswordResetToken {
-  id            Int      @id @default(autoincrement())
-  customerEmail String
-  tokenHash     String   @unique
-  expiresAt     DateTime
-  createdAt     DateTime @default(now())
-  customer      Customer @relation(fields: [customerEmail], references: [customerEmail], onDelete: Cascade)
+  id             Int           @id @default(autoincrement())
+  customerEmail  String
+  tokenHash      String        @unique
+  expiresAt      DateTime
+  createdAt      DateTime      @default(now())
+  customer       Customer      @relation(fields: [customerEmail], references: [customerEmail], onDelete: Cascade)
+  refreshToken   RefreshToken? @relation(fields: [refreshTokenId], references: [id])
+  refreshTokenId String?
 
   @@index([customerEmail])
 }

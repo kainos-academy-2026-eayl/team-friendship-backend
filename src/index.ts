@@ -1,11 +1,15 @@
 import 'dotenv/config';
 import dotenv from 'dotenv';
 import { createApp } from './app';
+import { AuthController } from './controllers/authController';
 import { LoginController } from './controllers/loginController';
 import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
 import { LoginRepository } from './repositories/loginRepository';
 import { ProductRepository } from './repositories/productRepository';
+import { RefreshTokenRepository } from './repositories/refreshTokenRepository';
+import { AccessTokenService } from './services/accessTokenService';
+import { AuthService } from './services/authService';
 import { LoginService } from './services/loginService';
 import { ProductService } from './services/productService';
 
@@ -20,21 +24,36 @@ if (!Number.isInteger(PORT) || PORT < 0 || PORT > 65535) {
   throw new Error(`Invalid PORT: ${process.env.PORT}`);
 }
 
+if (!process.env.JWT_ACCESS_SECRET) {
+  throw new Error('JWT_ACCESS_SECRET environment variable is not set');
+}
+
 const app = createApp();
 const prisma = createPrismaClient();
+const accessTokens = new AccessTokenService(process.env.JWT_ACCESS_SECRET);
 
 // Register new controllers / middleware here!
 
 // app.use('/', ...)
+// Everything here is public and does not require authentication
 const loginController = new LoginController(
   new LoginService(new LoginRepository(prisma)),
+  new AuthService(accessTokens, new RefreshTokenRepository(prisma)),
 );
 app.use('/', loginController.router());
+
+const authController = new AuthController(accessTokens);
+app.use('/', authController.router());
 
 const productController = new ProductController(
   new ProductService(new ProductRepository(prisma)),
 );
 app.use('/', productController.router());
+
+// Everything below this comment requires authentication
+app.use(authController.requireAuth);
+
+//Order history, order confirmation and checkout will require auth
 
 // Keep everything below this comment at the bottom of the file
 const server = app.listen(PORT, HOST, () => {
