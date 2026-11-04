@@ -10,6 +10,7 @@ const product = {
   productID: 40,
   productName: 'Marble',
   productDescription: 'Bold and shiny, perfect for all your taskmaster needs',
+  productCategory: 'Toys',
   productPrice: 30.88,
   productImage: 'products_images/marble.jpeg',
   productStock: 10,
