@@ -59,6 +59,7 @@ model Product {
   productID          Int    @id @default(autoincrement())
   productName        String
   productDescription String
+  productCategory    String
   productPrice       Float
   productImage       String
   productStock       Int
