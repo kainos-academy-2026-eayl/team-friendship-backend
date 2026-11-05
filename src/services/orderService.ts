@@ -1,3 +1,4 @@
+import type { Discount } from '../models/discountModel';
 import type { DeliveryAddress, OrderItem } from '../models/orderModel';
 import type {
   OrderRepository,
@@ -37,8 +38,9 @@ export class OrderService {
     customerID: number,
     items: OrderItem[],
     deliveryAddress?: DeliveryAddress,
+    discount?: Discount,
   ): Promise<OrderWithServices> {
-    return this.repository.create(customerID, items, deliveryAddress);
+    return this.repository.create(customerID, items, deliveryAddress, discount);
   }
 
   // Orders belonging to other customers are reported as missing so their existence is not revealed.

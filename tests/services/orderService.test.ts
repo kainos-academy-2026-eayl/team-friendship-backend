@@ -13,6 +13,8 @@ function order(customerID: number): OrderWithServices {
     status: 'pending',
     address: '123 Town Street',
     postcode: 'BT16 AAA',
+    discountCode: null,
+    discountAmount: 0,
     orderServices: [],
   };
 }
@@ -32,7 +34,12 @@ describe('OrderService', () => {
     const items = [{ productID: 3, quantity: 2 }];
 
     await expect(service.createOrder(1, items)).resolves.toEqual(order(1));
-    expect(repository.create).toHaveBeenCalledWith(1, items, undefined);
+    expect(repository.create).toHaveBeenCalledWith(
+      1,
+      items,
+      undefined,
+      undefined,
+    );
   });
 
   test('createOrder passes an alternative delivery address to the repository', async () => {
@@ -41,7 +48,26 @@ describe('OrderService', () => {
     const deliveryAddress = { address: '14 Gift Lane', postcode: 'BT9 5AB' };
 
     await service.createOrder(1, items, deliveryAddress);
-    expect(repository.create).toHaveBeenCalledWith(1, items, deliveryAddress);
+    expect(repository.create).toHaveBeenCalledWith(
+      1,
+      items,
+      deliveryAddress,
+      undefined,
+    );
+  });
+
+  test('createOrder passes the discount to the repository', async () => {
+    const { service, repository } = createService();
+    const items = [{ productID: 3, quantity: 2 }];
+    const discount = { code: 'FRIENDSHIP12', percentOff: 12 };
+
+    await service.createOrder(1, items, undefined, discount);
+    expect(repository.create).toHaveBeenCalledWith(
+      1,
+      items,
+      undefined,
+      discount,
+    );
   });
 
   test('getOrderForCustomer returns an order owned by the customer', async () => {

@@ -5,6 +5,7 @@ import { AdminController } from './controllers/adminController';
 import { AuthController } from './controllers/authController';
 import { BasketController } from './controllers/basketController';
 import { CustomerAddressController } from './controllers/customerAddressController';
+import { DiscountController } from './controllers/discountController';
 import { LoginController } from './controllers/loginController';
 import { OrderController } from './controllers/orderController';
 import { OrderHistoryController } from './controllers/orderHistoryController';
@@ -87,6 +88,8 @@ const customerAddressController = new CustomerAddressController(
   new CustomerAddressRepository(prisma),
 );
 app.use('/', customerAddressController.router());
+
+app.use('/', new DiscountController().router());
 
 // Everything below this comment requires authentication
 app.use(authController.requireAuth);

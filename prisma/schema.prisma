@@ -90,6 +90,9 @@ model Order {
   status        String
   address       String
   postcode      String
+  // Snapshot of the code used and the amount taken off, so later price changes don't alter past orders.
+  discountCode   String?
+  discountAmount Float          @default(0)
   customer      Customer       @relation(fields: [customerID], references: [customerID])
   orderServices OrderService[]
 }

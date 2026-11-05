@@ -20,6 +20,8 @@ const ORDER: OrderWithServices = {
   status: 'pending',
   address: '123 Town Street',
   postcode: 'BT16 AAA',
+  discountCode: null,
+  discountAmount: 0,
   orderServices: [],
 };
 
@@ -96,6 +98,7 @@ describe('POST /orders', () => {
       CUSTOMER_ID,
       VALID_BODY.orderServices,
       undefined,
+      undefined,
     );
   });
 
@@ -113,7 +116,40 @@ describe('POST /orders', () => {
       CUSTOMER_ID,
       VALID_BODY.orderServices,
       { address: '14 Gift Lane', postcode: 'BT9 5AB' },
+      undefined,
     );
+  });
+
+  test('passes a valid discount code to the service, ignoring case and spaces', async () => {
+    const { baseUrl, service } = await startServer();
+
+    const response = await postOrder(baseUrl, {
+      ...VALID_BODY,
+      discountCode: ' friendship12 ',
+    });
+
+    expect(response.status).toBe(201);
+    expect(service.createOrder).toHaveBeenCalledWith(
+      CUSTOMER_ID,
+      VALID_BODY.orderServices,
+      undefined,
+      { code: 'FRIENDSHIP12', percentOff: 12 },
+    );
+  });
+
+  test('rejects an unknown discount code without creating an order', async () => {
+    const { baseUrl, service } = await startServer();
+
+    const response = await postOrder(baseUrl, {
+      ...VALID_BODY,
+      discountCode: 'FREESTUFF',
+    });
+
+    expect(response.status).toBe(400);
+    expect(await readBody(response)).toEqual({
+      error: 'Invalid discount code',
+    });
+    expect(service.createOrder).not.toHaveBeenCalled();
   });
 
   test.each([

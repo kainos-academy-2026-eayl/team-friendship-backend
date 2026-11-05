@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from '../generated/prisma/client';
+import { calculateDiscount, type Discount } from '../models/discountModel';
 import type { DeliveryAddress, OrderItem } from '../models/orderModel';
 import {
   InsufficientStockError,
@@ -25,6 +26,7 @@ export class OrderRepository {
     customerID: number,
     items: OrderItem[],
     deliveryAddress?: DeliveryAddress,
+    discount?: Discount,
   ): Promise<OrderWithServices> {
     return this.prisma.$transaction(async (tx) => {
       // Fall back to the customer's saved address when no alternative is supplied.
@@ -56,12 +58,30 @@ export class OrderRepository {
         }
       }
 
+      let discountAmount = 0;
+      if (discount) {
+        // Prices are read inside the transaction so the discount matches the stock just reserved.
+        const products = await tx.product.findMany({
+          where: { productID: { in: items.map((item) => item.productID) } },
+          select: { productID: true, productPrice: true },
+        });
+        const subtotal = items.reduce((sum, item) => {
+          const price =
+            products.find((product) => product.productID === item.productID)
+              ?.productPrice ?? 0;
+          return sum + price * item.quantity;
+        }, 0);
+        discountAmount = calculateDiscount(subtotal, discount.percentOff);
+      }
+
       return tx.order.create({
         data: {
           customerID,
           status: INITIAL_ORDER_STATUS,
           address,
           postcode,
+          discountCode: discount?.code ?? null,
+          discountAmount,
           orderServices: { create: items },
         },
         include: orderWithServices,

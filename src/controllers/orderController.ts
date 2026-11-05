@@ -5,6 +5,7 @@ import {
   Router,
 } from 'express';
 import { z } from 'zod';
+import { findDiscount } from '../models/discountModel';
 import {
   InsufficientStockError,
   OrderNotFoundError,
@@ -42,6 +43,7 @@ export const createOrderSchema = z
     // Optional alternative delivery address; the customer's saved address is used when omitted.
     address: requiredText('Address', 255).optional(),
     postcode: requiredText('Postcode', 10).optional(),
+    discountCode: requiredText('Discount code', 50).optional(),
     orderServices: z
       .array(
         z.object({
@@ -113,16 +115,24 @@ export class OrderController {
       return;
     }
 
-    const { address, postcode, orderServices } = result.data;
+    const { address, postcode, discountCode, orderServices } = result.data;
     const deliveryAddress =
       address !== undefined && postcode !== undefined
         ? { address, postcode }
         : undefined;
 
+    const discount =
+      discountCode === undefined ? undefined : findDiscount(discountCode);
+    if (discountCode !== undefined && !discount) {
+      res.status(400).json({ error: 'Invalid discount code' });
+      return;
+    }
+
     const order = await this.service.createOrder(
       customerId,
       orderServices,
       deliveryAddress,
+      discount,
     );
     res.status(201).location(`/orders/${order.orderID}`).json({ order });
   };
