@@ -84,11 +84,12 @@ function validationError(res: Response, message: string, error: z.ZodError) {
 
 // Defensive check in case the router is mounted without the auth middleware.
 function authenticatedCustomer(res: Response): number | undefined {
-  const customerId = res.locals.customerId;
-  if (customerId === undefined) {
+  const principal = res.locals.principal;
+  if (principal?.type !== 'customer') {
     res.status(401).json({ error: 'Authentication required' });
+    return undefined;
   }
-  return customerId;
+  return principal.id;
 }
 
 function forbidden(res: Response): void {

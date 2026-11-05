@@ -1,3 +1,4 @@
+TRUNCATE TABLE "Basket" RESTART IDENTITY CASCADE;
 TRUNCATE TABLE "OrderService" RESTART IDENTITY CASCADE;
 TRUNCATE TABLE "Order" RESTART IDENTITY CASCADE;
 TRUNCATE TABLE "Customer" RESTART IDENTITY CASCADE;
@@ -84,15 +85,13 @@ INSERT INTO "OrderService" (
 VALUES
     (1, 1, 2),
     (1, 2, 1),
-    (2, 4, 1),
-    (3, 3, 3);
-SELECT order_line."orderID", order_line."productID", order_line.quantity
-FROM (VALUES
-    (1, 1, 2),
-    (1, 2, 1),
     (1, 3, 1),
     (1, 4, 1),
     (2, 1, 1),
+    (2, 4, 1),
+    (3, 3, 3),
+    (4, 9, 1),
+    (5, 16, 1),
     (6, 5, 1),
     (6, 6, 1),
     (7, 4, 1),
@@ -118,5 +117,21 @@ FROM (VALUES
     (13, 12, 1),
     (14, 7, 1),
     (14, 14, 2),
-    (14, 4, 1)
-) AS order_line("orderID", "productID", quantity);
+    (14, 4, 1);
+
+-- Basket contents for testing checkout. Bob Johnson (4) is left empty to show the empty-basket state.
+INSERT INTO "Basket" (
+    "customerID",
+    "productID",
+    "quantity"
+)
+VALUES
+    (1, 4, 2),
+    (1, 12, 1),
+    (1, 3, 3),
+    (2, 13, 1),
+    (2, 9, 2),
+    (3, 2, 1),
+    (5, 11, 1),
+    (6, 6, 1),
+    (6, 14, 2);

@@ -4,6 +4,7 @@ import { createApp } from './app';
 import { AdminController } from './controllers/adminController';
 import { AuthController } from './controllers/authController';
 import { BasketController } from './controllers/basketController';
+import { CustomerAddressController } from './controllers/customerAddressController';
 import { LoginController } from './controllers/loginController';
 import { OrderController } from './controllers/orderController';
 import { OrderHistoryController } from './controllers/orderHistoryController';
@@ -11,6 +12,7 @@ import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
 import { AdminRepository } from './repositories/adminRepository';
 import { BasketRepository } from './repositories/basketRepository';
+import { CustomerAddressRepository } from './repositories/customerAddressRepository';
 import { LoginRepository } from './repositories/loginRepository';
 import { OrderHistoryRepository } from './repositories/orderHistoryRepository';
 import { OrderRepository } from './repositories/orderRepository';
@@ -80,6 +82,11 @@ const basketController = new BasketController(
   new BasketService(new BasketRepository(prisma)),
 );
 app.use('/', basketController.router());
+
+const customerAddressController = new CustomerAddressController(
+  new CustomerAddressRepository(prisma),
+);
+app.use('/', customerAddressController.router());
 
 // Everything below this comment requires authentication
 app.use(authController.requireAuth);

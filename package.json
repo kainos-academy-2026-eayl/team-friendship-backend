@@ -12,6 +12,7 @@
     "lint:unsafe": "biome check --write --error-on-warnings --unsafe .",
     "prisma:generate": "prisma generate",
     "admin:provision": "tsx prisma/provisionAdmin.ts",
+    "basket:fill": "tsx prisma/fillBasket.ts",
     "test": "vitest run",
     "prepare": "node .husky/install.mjs",
     "predev": "prisma generate",

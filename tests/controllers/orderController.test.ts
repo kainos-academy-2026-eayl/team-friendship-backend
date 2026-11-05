@@ -4,6 +4,7 @@ import express from 'express';
 import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { OrderController } from '../../src/controllers/orderController';
 import type { OrderWithServices } from '../../src/repositories/orderRepository';
+import type { AuthPrincipal } from '../../src/services/accessTokenService';
 import {
   InsufficientStockError,
   OrderNotFoundError,
@@ -32,13 +33,13 @@ function createService() {
 
 async function startServer(
   service = createService(),
-  customerId: number | null = CUSTOMER_ID,
+  principal: AuthPrincipal | null = { type: 'customer', id: CUSTOMER_ID },
 ) {
   const app = express();
   app.use(express.json());
   app.use((_req, res, next) => {
-    if (customerId !== null) {
-      res.locals.customerId = customerId;
+    if (principal !== null) {
+      res.locals.principal = principal;
     }
     next();
   });
@@ -214,6 +215,18 @@ describe('POST /orders', () => {
     const response = await postOrder(baseUrl, VALID_BODY);
 
     expect(response.status).toBe(401);
+  });
+
+  test('returns 401 for staff accounts', async () => {
+    const { baseUrl, service } = await startServer(createService(), {
+      type: 'staff',
+      id: CUSTOMER_ID,
+    });
+
+    const response = await postOrder(baseUrl, VALID_BODY);
+
+    expect(response.status).toBe(401);
+    expect(service.createOrder).not.toHaveBeenCalled();
   });
 });
 
