@@ -4,17 +4,21 @@ import { createApp } from './app';
 import { AuthController } from './controllers/authController';
 import { BasketController } from './controllers/basketController';
 import { LoginController } from './controllers/loginController';
+import { OrderHistoryController } from './controllers/orderHistoryController';
 import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
 import { BasketRepository } from './repositories/basketRepository';
 import { LoginRepository } from './repositories/loginRepository';
+import { OrderHistoryRepository } from './repositories/orderHistoryRepository';
 import { ProductRepository } from './repositories/productRepository';
 import { RefreshTokenRepository } from './repositories/refreshTokenRepository';
 import { AccessTokenService } from './services/accessTokenService';
 import { AuthService } from './services/authService';
 import { BasketService } from './services/basketService';
 import { LoginService } from './services/loginService';
+import { OrderHistoryService } from './services/orderHistoryService';
 import { ProductService } from './services/productService';
+
 
 if (!process.env.PORT) {
   throw new Error('PORT environment variable is not set');
@@ -62,6 +66,10 @@ app.use('/', basketController.router());
 app.use(authController.requireAuth);
 
 //Order history, order confirmation and checkout will require auth
+const orderHistoryController = new OrderHistoryController(
+  new OrderHistoryService(new OrderHistoryRepository(prisma)),
+);
+app.use('/', orderHistoryController.router());
 
 // Keep everything below this comment at the bottom of the file
 const server = app.listen(PORT, HOST, () => {

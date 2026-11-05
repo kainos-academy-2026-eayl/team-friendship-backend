@@ -10,6 +10,8 @@ import {
   type OrderHistoryService,
 } from '../services/orderHistoryService';
 
+
+
 export const customerIdSchema = z.object({
   customerID: z.coerce
     .number({ error: 'Customer id must be a number' })
@@ -23,7 +25,7 @@ type OrderHistoryServiceContract = Pick<
 >;
 
 export class OrderHistoryController {
-  constructor(private readonly service: OrderHistoryServiceContract) {}
+  constructor(private readonly service: OrderHistoryServiceContract) { }
 
   getByCustomerId = async (req: Request, res: Response): Promise<void> => {
     const result = customerIdSchema.safeParse(req.params);
@@ -42,10 +44,15 @@ export class OrderHistoryController {
 
     const orders = orderHistory.flatMap((order) =>
       order.orderServices.map((orderService) => ({
-        dateCreated: order.dateCreated,
-        status: order.status,
-        productName: orderService.product.productName,
+        orderId: order.orderID,
+        date: order.dateCreated.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        }),
+        product: orderService.product.productName,
         quantity: orderService.quantity,
+        status: order.status,
       })),
     );
 
