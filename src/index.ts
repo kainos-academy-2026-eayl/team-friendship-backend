@@ -59,11 +59,6 @@ const productController = new ProductController(
 );
 app.use('/', productController.router());
 
-const basketController = new BasketController(
-  new BasketService(new BasketRepository(prisma)),
-);
-app.use('/', basketController.router());
-
 // Everything below this comment requires authentication
 app.use(authController.requireAuth);
 
@@ -73,11 +68,15 @@ const adminController = new AdminController(
 );
 app.use('/admin', adminController.router());
 
-//Order history, order confirmation and checkout will require auth
 const orderController = new OrderController(
   new OrderService(new OrderRepository(prisma)),
 );
 app.use('/', orderController.router());
+
+const basketController = new BasketController(
+  new BasketService(new BasketRepository(prisma)),
+);
+app.use('/', basketController.router());
 
 // Keep everything below this comment at the bottom of the file
 const server = app.listen(PORT, HOST, () => {
