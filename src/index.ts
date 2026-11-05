@@ -5,17 +5,20 @@ import { AdminController } from './controllers/adminController';
 import { AuthController } from './controllers/authController';
 import { BasketController } from './controllers/basketController';
 import { LoginController } from './controllers/loginController';
+import { OrderController } from './controllers/orderController';
 import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
 import { AdminRepository } from './repositories/adminRepository';
 import { BasketRepository } from './repositories/basketRepository';
 import { LoginRepository } from './repositories/loginRepository';
+import { OrderRepository } from './repositories/orderRepository';
 import { ProductRepository } from './repositories/productRepository';
 import { RefreshTokenRepository } from './repositories/refreshTokenRepository';
 import { AccessTokenService } from './services/accessTokenService';
 import { AuthService } from './services/authService';
 import { BasketService } from './services/basketService';
 import { LoginService } from './services/loginService';
+import { OrderService } from './services/orderService';
 import { ProductService } from './services/productService';
 
 if (!process.env.PORT) {
@@ -71,6 +74,10 @@ const adminController = new AdminController(
 app.use('/admin', adminController.router());
 
 //Order history, order confirmation and checkout will require auth
+const orderController = new OrderController(
+  new OrderService(new OrderRepository(prisma)),
+);
+app.use('/', orderController.router());
 
 // Keep everything below this comment at the bottom of the file
 const server = app.listen(PORT, HOST, () => {

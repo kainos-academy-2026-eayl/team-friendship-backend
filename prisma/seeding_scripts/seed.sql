@@ -1,8 +1,7 @@
-DELETE FROM "OrderService";
-DELETE FROM "Order";
-DELETE FROM "Product";
-DELETE FROM "Customer";
-
+-- RESTART IDENTITY keeps the hard-coded customer, product and order IDs below valid on every re-seed.
+TRUNCATE "OrderService", "Order", "Product", "Customer" RESTART IDENTITY CASCADE;
+-- TRUNCATE statement clears all the tables in one line so DELETE FROM becomes unnecessary.
+-- RESTART IDENTITY automatically restarts sequences owned by columns of the truncated table(s).
 INSERT INTO "Product"(
     "productName",
     "productDescription",
@@ -56,6 +55,9 @@ VALUES
     (3, 3, 'pending'),
     (4, 4, 'pending'),
     (5, 5, 'pending');
+
+-- Explicit IDs bypass the sequence, so move it on to avoid clashes with orders created by the API.
+SELECT setval(pg_get_serial_sequence('"Order"', 'orderID'), (SELECT MAX("orderID") FROM "Order"));
 
 INSERT INTO "OrderService"(
     "orderID",
