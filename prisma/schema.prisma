@@ -77,6 +77,8 @@ model Product {
   productPrice       Float
   productImage       String
   productStock       Int
+
+  basketItems Basket[]
   orderServices      OrderService[]
 }
 
@@ -98,4 +100,18 @@ model OrderService {
   product   Product @relation(fields: [productID], references: [productID])
 
   @@id([orderID, productID])
+}
+
+model Basket {
+  basketID   Int @id @default(autoincrement())
+
+  customerID Int
+  productID  Int
+  quantity   Int
+
+  customer Customer @relation(fields: [customerID], references: [customerID])
+  product Product @relation(fields: [productID], references: [productID])
+
+  @@index([customerID])
+  @@index([productID])
 }
