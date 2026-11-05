@@ -16,6 +16,10 @@ export class BasketService {
     return this.basketRepository.addItem(customerID, productID, quantity);
   }
 
+  updateQuantity(basketID: number, quantity: number): Promise<Basket> {
+    return this.basketRepository.updateQuantity(basketID, quantity);
+  }
+
   removeFromBasket(basketID: number): Promise<Basket> {
     return this.basketRepository.removeItem(basketID);
   }
