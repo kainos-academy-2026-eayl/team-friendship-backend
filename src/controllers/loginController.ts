@@ -55,14 +55,17 @@ export class LoginController {
       return;
     }
 
-    const customer = await this.service.login(
+    const account = await this.service.login(
       result.data.email,
       result.data.password,
       req.ip ?? req.socket.remoteAddress ?? 'unknown',
     );
-    const tokens = await this.authService.startSession(customer.customerID);
+    const tokens = await this.authService.startSession(account.principal);
 
-    this.sendTokens(res, tokens, { message: 'Login successful', customer });
+    this.sendTokens(res, tokens, {
+      message: 'Login successful',
+      customer: account.customer,
+    });
   };
 
   refresh = async (req: Request, res: Response): Promise<void> => {

@@ -1,15 +1,19 @@
 import 'dotenv/config';
 import dotenv from 'dotenv';
 import { createApp } from './app';
+import { AdminController } from './controllers/adminController';
 import { AuthController } from './controllers/authController';
 import { BasketController } from './controllers/basketController';
 import { LoginController } from './controllers/loginController';
+import { OrderController ) from './controllers/orderController';
 import { OrderHistoryController } from './controllers/orderHistoryController';
 import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
+import { AdminRepository } from './repositories/adminRepository';
 import { BasketRepository } from './repositories/basketRepository';
 import { LoginRepository } from './repositories/loginRepository';
 import { OrderHistoryRepository } from './repositories/orderHistoryRepository';
+import { OrderRepository } from './repositories/orderRepository';
 import { ProductRepository } from './repositories/productRepository';
 import { RefreshTokenRepository } from './repositories/refreshTokenRepository';
 import { AccessTokenService } from './services/accessTokenService';
@@ -17,6 +21,7 @@ import { AuthService } from './services/authService';
 import { BasketService } from './services/basketService';
 import { LoginService } from './services/loginService';
 import { OrderHistoryService } from './services/orderHistoryService';
+import { OrderService } from './services/orderService';
 import { ProductService } from './services/productService';
 
 if (!process.env.PORT) {
@@ -48,13 +53,28 @@ const loginController = new LoginController(
 );
 app.use('/', loginController.router());
 
-const authController = new AuthController(accessTokens);
+const loginRepository = new LoginRepository(prisma);
+const authController = new AuthController(accessTokens, loginRepository);
 app.use('/', authController.router());
 
 const productController = new ProductController(
   new ProductService(new ProductRepository(prisma)),
 );
 app.use('/', productController.router());
+
+// Everything below this comment requires authentication
+app.use(authController.requireAuth);
+
+const adminController = new AdminController(
+  new AdminRepository(prisma),
+  loginRepository,
+);
+app.use('/admin', adminController.router());
+
+const orderController = new OrderController(
+  new OrderService(new OrderRepository(prisma)),
+);
+app.use('/', orderController.router());
 
 const basketController = new BasketController(
   new BasketService(new BasketRepository(prisma)),
