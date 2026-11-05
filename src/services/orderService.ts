@@ -1,5 +1,5 @@
+import type { OrderItem } from '../models/orderModel';
 import type {
-  OrderItem,
   OrderRepository,
   OrderWithServices,
 } from '../repositories/orderRepository';

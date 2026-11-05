@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from '../generated/prisma/client';
+import type { OrderItem } from '../models/orderModel';
 import {
   InsufficientStockError,
   OrderProductNotFoundError,
@@ -14,11 +15,6 @@ const orderWithServices = {
 export type OrderWithServices = Prisma.OrderGetPayload<{
   include: typeof orderWithServices;
 }>;
-
-export interface OrderItem {
-  productID: number;
-  quantity: number;
-}
 
 export const INITIAL_ORDER_STATUS = 'pending';
 
