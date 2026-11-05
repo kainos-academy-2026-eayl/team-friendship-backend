@@ -19,7 +19,6 @@ import { LoginService } from './services/loginService';
 import { OrderHistoryService } from './services/orderHistoryService';
 import { ProductService } from './services/productService';
 
-
 if (!process.env.PORT) {
   throw new Error('PORT environment variable is not set');
 }
