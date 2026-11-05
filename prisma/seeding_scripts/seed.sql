@@ -1,7 +1,8 @@
--- RESTART IDENTITY keeps the hard-coded customer, product and order IDs below valid on every re-seed.
-TRUNCATE "OrderService", "Order", "Product", "Customer" RESTART IDENTITY CASCADE;
--- TRUNCATE statement clears all the tables in one line so DELETE FROM becomes unnecessary.
--- RESTART IDENTITY automatically restarts sequences owned by columns of the truncated table(s).
+TRUNCATE TABLE "OrderService" RESTART IDENTITY CASCADE;
+TRUNCATE TABLE "Order" RESTART IDENTITY CASCADE;
+TRUNCATE TABLE "Customer" RESTART IDENTITY CASCADE;
+TRUNCATE TABLE "Product" RESTART IDENTITY CASCADE;
+
 INSERT INTO "Product"(
     "productName",
     "productDescription",
@@ -42,8 +43,11 @@ VALUES
     ('Jane', 'Doe', '321 Up Street', 'BT16 AAA', 'janedoe@example.com', '0987654321', '$argon2id$v=19$m=19456,t=2,p=1$hR/cmqIM9eD/I5qOx0HNOA$cQVPjoq+5UNQgnPyWbxSBBenzTDSfdSVwfpYOFS63cA'),
     ('Alice', 'Smith', '456 Down Street', 'BT16 BBB', 'alicesmith@example.com', '0112233445', '$argon2id$v=19$m=19456,t=2,p=1$ymunqbuaaQNwQdoplFjX1w$c0vBdUnp96Ewf+jPRHb9Pf5Fj4XIZlMtH9GGSQ0eerw'),
     ('Bob', 'Johnson', '789 Left Street', 'BT16 CCC', 'bobjohnson@example.com', '0223344556', '$argon2id$v=19$m=19456,t=2,p=1$h/4V3vXvm0ribX0Au9zjiw$r5JPK/5fQSAmxAwkAbKODohX8RYEtAV8NPIeZmDZOtI'),
-    ('Greg', 'Heffley', '88 Burger Town', 'BT12 ABC', 'gregheffley@example.com', '0334455667', '$argon2id$v=19$m=19456,t=2,p=1$w1mKkfMCvhaJAn4JJO524w$QXcWumehXC1V5If+MnOFeVXgvRU/nnOGUTmqR35EKwo');
+    ('Greg', 'Heffley', '88 Burger Town', 'BT12 ABC', 'gregheffley@example.com', '0334455667', '$argon2id$v=19$m=19456,t=2,p=1$w1mKkfMCvhaJAn4JJO524w$QXcWumehXC1V5If+MnOFeVXgvRU/nnOGUTmqR35EKwo'),
+    ('Eva', 'Rouffet', '99 Peanuts Street', 'BT16 DDD', 'eva@example.com', '0445566778', '$argon2id$v=19$m=19456,t=2,p=1$cBWIwKee85ipl5fHE3m3hg$wXljgOWvNIWa5eNVocZ1Z2Fy/r8ExJ0rxW7DVcPQCNg');
 
+
+INSERT INTO "Order" (
 INSERT INTO "Order"(
     "orderID",
     "customerID",
@@ -71,9 +75,25 @@ SELECT setval(pg_get_serial_sequence('"Order"', 'orderID'), (SELECT MAX("orderID
 
 INSERT INTO "OrderService"(
     "orderID",
+    "customerID",
+    "dateCreated",
+    "status"
+)
+VALUES
+    (1, 6, '2026-11-01 10:00:00', 'Delivered'),
+    (2, 6, '2026-11-03 14:30:00', 'Pending'),
+    (3, 4, '2026-10-15 09:00:00', 'Delivered');
+
+INSERT INTO "OrderService" (
+    "orderID",
     "productID",
     "quantity"
 )
+VALUES
+    (1, 1, 2),
+    (1, 2, 1),
+    (2, 4, 1),
+    (3, 3, 3);
 SELECT order_line."orderID", order_line."productID", order_line.quantity
 FROM (VALUES
     (1, 1, 2),
