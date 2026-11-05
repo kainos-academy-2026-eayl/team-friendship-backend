@@ -1,5 +1,7 @@
-DELETE FROM "Product";
-
+-- RESTART IDENTITY keeps the hard-coded customer, product and order IDs below valid on every re-seed.
+TRUNCATE "OrderService", "Order", "Product", "Customer" RESTART IDENTITY CASCADE;
+-- TRUNCATE statement clears all the tables in one line so DELETE FROM becomes unnecessary.
+-- RESTART IDENTITY automatically restarts sequences owned by columns of the truncated table(s).
 INSERT INTO "Product"(
     "productName",
     "productDescription",
@@ -26,8 +28,6 @@ VALUES
     ('Monster High A', 'Classic Monster High doll', 'Dolls', 19.99, 'monsterHighA.webp', 15),
     ('Monster High B', 'Classic Monster High doll', 'Dolls', 19.99, 'monsterHighB.webp', 15);
 
-DELETE FROM "Customer";
-
 INSERT INTO "Customer"(
     "customerForename",
     "customerSurname",
@@ -44,21 +44,6 @@ VALUES
     ('Bob', 'Johnson', '789 Left Street', 'BT16 CCC', 'bobjohnson@example.com', '0223344556', '$argon2id$v=19$m=19456,t=2,p=1$h/4V3vXvm0ribX0Au9zjiw$r5JPK/5fQSAmxAwkAbKODohX8RYEtAV8NPIeZmDZOtI'),
     ('Greg', 'Heffley', '88 Burger Town', 'BT12 ABC', 'gregheffley@example.com', '0334455667', '$argon2id$v=19$m=19456,t=2,p=1$w1mKkfMCvhaJAn4JJO524w$QXcWumehXC1V5If+MnOFeVXgvRU/nnOGUTmqR35EKwo');
 
-DELETE FROM "OrderService";
-INSERT INTO "OrderService"(
-    "orderID",
-    "productID",
-    "quantity"
-)
-VALUES
-    (1, 1, 2),
-    (1, 2, 1),
-    (1, 3, 1),
-    (1, 4, 1),
-    (2, 1, 1),
-
-
-DELETE FROM "Order";
 INSERT INTO "Order"(
     "orderID",
     "customerID",
@@ -70,3 +55,20 @@ VALUES
     (3, 3, 'pending'),
     (4, 4, 'pending'),
     (5, 5, 'pending');
+
+-- Explicit IDs bypass the sequence, so move it on to avoid clashes with orders created by the API.
+SELECT setval(pg_get_serial_sequence('"Order"', 'orderID'), (SELECT MAX("orderID") FROM "Order"));
+
+INSERT INTO "OrderService"(
+    "orderID",
+    "productID",
+    "quantity"
+)
+SELECT order_line."orderID", order_line."productID", order_line.quantity
+FROM (VALUES
+    (1, 1, 2),
+    (1, 2, 1),
+    (1, 3, 1),
+    (1, 4, 1),
+    (2, 1, 1)
+) AS order_line("orderID", "productID", quantity);

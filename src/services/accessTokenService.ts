@@ -6,6 +6,11 @@ const ALGORITHM = 'HS256';
 const ISSUER = 'team-friendship-backend';
 const AUDIENCE = 'team-friendship-frontend';
 
+export type AuthPrincipal = {
+  type: 'customer' | 'staff';
+  id: number;
+};
+
 export class InvalidAccessTokenError extends Error {
   constructor() {
     super('Invalid or expired access token');
@@ -23,10 +28,14 @@ export class AccessTokenService {
     this.secret = new TextEncoder().encode(secret);
   }
 
-  sign(customerId: number): Promise<string> {
-    return new SignJWT({})
+  sign(principal: AuthPrincipal | number): Promise<string> {
+    const identity =
+      typeof principal === 'number'
+        ? { type: 'customer' as const, id: principal }
+        : principal;
+    return new SignJWT({ principalType: identity.type })
       .setProtectedHeader({ alg: ALGORITHM, typ: 'JWT' })
-      .setSubject(String(customerId))
+      .setSubject(String(identity.id))
       .setIssuer(ISSUER)
       .setAudience(AUDIENCE)
       .setIssuedAt()
@@ -34,7 +43,7 @@ export class AccessTokenService {
       .sign(this.secret);
   }
 
-  async verify(token: string): Promise<number> {
+  async verify(token: string): Promise<AuthPrincipal> {
     try {
       const { payload } = await jwtVerify(token, this.secret, {
         algorithms: [ALGORITHM],
@@ -42,11 +51,16 @@ export class AccessTokenService {
         audience: AUDIENCE,
         requiredClaims: ['sub', 'exp'],
       });
-      const customerId = Number(payload.sub);
-      if (!Number.isSafeInteger(customerId) || customerId <= 0) {
+      const id = Number(payload.sub);
+      const type = payload.principalType ?? 'customer';
+      if (
+        !Number.isSafeInteger(id) ||
+        id <= 0 ||
+        (type !== 'customer' && type !== 'staff')
+      ) {
         throw new InvalidAccessTokenError();
       }
-      return customerId;
+      return { type, id };
     } catch {
       throw new InvalidAccessTokenError();
     }

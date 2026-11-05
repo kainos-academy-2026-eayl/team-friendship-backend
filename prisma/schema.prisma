@@ -23,17 +23,31 @@ model Customer {
   customerPassword    String
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
+  orders              Order[]
+  basketItems         Basket[]
+}
 
   orders      Order[]
   basketItems Basket[]
+model Staff {
+  staffID             Int            @id @default(autoincrement())
+  staffForename       String
+  staffSurname        String
+  staffRole           String         @default("STAFF")
+  staffavailability   String         @default("AVAILABLE")
+  staffEmail          String         @unique
+  staffPassword       String
+  refreshTokens       RefreshToken[]
 }
 
 model RefreshToken {
   id                  String               @id @default(uuid())
   tokenHash           String               @unique
   familyId            String
-  customerID          Int
-  customer            Customer             @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
+  customerID          Int?
+  customer            Customer?            @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
+  staffID             Int?
+  staff               Staff?               @relation(fields: [staffID], references: [staffID], onDelete: Cascade)
   expiresAt           DateTime
   revokedAt           DateTime?
   replacedById        String?
@@ -41,6 +55,7 @@ model RefreshToken {
   passwordResetTokens PasswordResetToken[]
 
   @@index([customerID])
+  @@index([staffID])
   @@index([familyId])
 }
 

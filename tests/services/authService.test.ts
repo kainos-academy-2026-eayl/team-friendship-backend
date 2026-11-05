@@ -12,7 +12,7 @@ const NOW = new Date('2030-01-01T00:00:00Z');
 function setup(rotation: RotationResult = { status: 'invalid' }) {
   const created: {
     tokenHash: string;
-    customerId: number;
+    principal: { type: 'customer' | 'staff'; id: number };
     familyId: string;
     expiresAt: Date;
   }[] = [];
@@ -20,7 +20,10 @@ function setup(rotation: RotationResult = { status: 'invalid' }) {
   const revoked: [string, Date][] = [];
 
   const service = new AuthService(
-    { sign: async (customerId) => `access-for-${customerId}` },
+    {
+      sign: async (principal) =>
+        `access-for-${typeof principal === 'number' ? principal : principal.id}`,
+    },
     {
       create: async (data) => {
         created.push(data);
@@ -53,7 +56,7 @@ describe('AuthService.startSession', () => {
     expect(created).toEqual([
       {
         tokenHash: hashToken(tokens.refreshToken),
-        customerId: 7,
+        principal: { type: 'customer', id: 7 },
         familyId: expect.any(String),
         expiresAt: tokens.refreshExpiresAt,
       },
@@ -70,6 +73,16 @@ describe('AuthService.startSession', () => {
     expect(first.refreshToken).not.toBe(second.refreshToken);
     expect(created[0]?.familyId).not.toBe(created[1]?.familyId);
   });
+
+  test('stores staff identity separately from a customer identity', async () => {
+    const { service, created } = setup();
+
+    await service.startSession({ type: 'staff', id: 7 });
+
+    expect(created[0]).toMatchObject({
+      principal: { type: 'staff', id: 7 },
+    });
+  });
 });
 
 describe('AuthService.refresh', () => {
@@ -77,7 +90,7 @@ describe('AuthService.refresh', () => {
     const expiresAt = new Date('2030-01-05T00:00:00Z');
     const { service, rotated } = setup({
       status: 'rotated',
-      customerId: 7,
+      principal: { type: 'customer', id: 7 },
       expiresAt,
     });
 

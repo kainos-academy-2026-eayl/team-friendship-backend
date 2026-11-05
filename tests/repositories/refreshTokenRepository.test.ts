@@ -13,6 +13,7 @@ function token(overrides: Partial<RefreshToken> = {}): RefreshToken {
     tokenHash: 'old-hash',
     familyId: 'family-1',
     customerID: 7,
+    staffID: null,
     expiresAt: new Date('2030-01-05T00:00:00Z'),
     revokedAt: null,
     replacedById: null,
@@ -73,7 +74,7 @@ describe('RefreshTokenRepository.rotate', () => {
 
     expect(result).toEqual({
       status: 'rotated',
-      customerId: 7,
+      principal: { type: 'customer', id: 7 },
       expiresAt: new Date('2030-01-05T00:00:00Z'),
     });
     expect(log).toEqual([
@@ -87,13 +88,36 @@ describe('RefreshTokenRepository.rotate', () => {
       data: {
         tokenHash: 'new-hash',
         customerID: 7,
+        staffID: null,
         familyId: 'family-1',
         expiresAt: new Date('2030-01-05T00:00:00Z'),
       },
     });
+
     expect(tx.refreshToken.update).toHaveBeenCalledWith({
       where: { id: 'token-1' },
       data: { revokedAt: NOW, replacedById: 'token-2' },
+    });
+  });
+
+  test('preserves staff identity when rotating staff refresh tokens', async () => {
+    const staffToken = token({ customerID: null, staffID: 7 });
+    const { repository, tx } = setup(staffToken);
+
+    await expect(
+      repository.rotate('old-hash', 'new-hash', NOW),
+    ).resolves.toMatchObject({
+      status: 'rotated',
+      principal: { type: 'staff', id: 7 },
+    });
+    expect(tx.refreshToken.create).toHaveBeenCalledWith({
+      data: {
+        tokenHash: 'new-hash',
+        customerID: null,
+        staffID: 7,
+        familyId: 'family-1',
+        expiresAt: staffToken.expiresAt,
+      },
     });
   });
 
