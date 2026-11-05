@@ -3,6 +3,7 @@ import type { AddressInfo } from 'node:net';
 import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { createApp } from '../../src/app';
 import { LoginController } from '../../src/controllers/loginController';
+import type { AuthPrincipal } from '../../src/services/accessTokenService';
 import {
   type AuthService,
   type AuthTokens,
@@ -12,6 +13,7 @@ import {
   type CustomerDetails,
   INVALID_CREDENTIALS_MESSAGE,
   InvalidCredentialsError,
+  type LoginAccount,
   TOO_MANY_ATTEMPTS_MESSAGE,
   TooManyAttemptsError,
 } from '../../src/services/loginService';
@@ -24,6 +26,22 @@ const customer: CustomerDetails = {
   postcode: 'BT1 1AA',
   customerEmail: 'ada@example.com',
   customerPhone: '07123456789',
+};
+const customerAccount: LoginAccount = {
+  principal: { type: 'customer', id: customer.customerID },
+  customer: { ...customer, role: 'customer' },
+};
+const adminAccount: LoginAccount = {
+  principal: { type: 'staff', id: 2 },
+  customer: {
+    staffID: 2,
+    staffForename: 'Friendshop',
+    staffSurname: 'Administrator',
+    staffRole: 'ADMIN',
+    staffavailability: 'AVAILABLE',
+    staffEmail: 'admin@friendshop.com',
+    role: 'admin',
+  },
 };
 
 const tokens: AuthTokens = {
@@ -48,7 +66,7 @@ async function startServer(
     email: string,
     password: string,
     clientId: string,
-  ) => Promise<CustomerDetails>,
+  ) => Promise<LoginAccount>,
   auth: AuthContract = fakeAuth(),
 ) {
   const app = createApp();
@@ -79,15 +97,15 @@ function postLogin(baseUrl: string, body: unknown) {
 describe('POST /login', () => {
   test('returns 200, customer details and tokens for valid credentials', async () => {
     const calls: [string, string, string][] = [];
-    const sessions: number[] = [];
+    const sessions: (AuthPrincipal | number)[] = [];
     const baseUrl = await startServer(
       async (email, password, clientId) => {
         calls.push([email, password, clientId]);
-        return customer;
+        return customerAccount;
       },
       fakeAuth({
-        startSession: async (customerId) => {
-          sessions.push(customerId);
+        startSession: async (principal) => {
+          sessions.push(principal);
           return tokens;
         },
       }),
@@ -106,7 +124,7 @@ describe('POST /login', () => {
     expect(response.headers.get('set-cookie')).toBeNull();
     expect(await response.json()).toEqual({
       message: 'Login successful',
-      customer,
+      customer: customerAccount.customer,
       accessToken: tokens.accessToken,
       tokenType: 'Bearer',
       expiresIn: 900,
@@ -114,7 +132,7 @@ describe('POST /login', () => {
       refreshExpiresAt: tokens.refreshExpiresAt.toISOString(),
     });
     expect(calls).toEqual([['ada@example.com', 'Password123!', '127.0.0.1']]);
-    expect(sessions).toEqual([customer.customerID]);
+    expect(sessions).toEqual([{ type: 'customer', id: customer.customerID }]);
   });
 
   test('returns 401 with a generic message for invalid credentials', async () => {
@@ -131,6 +149,21 @@ describe('POST /login', () => {
     expect(await response.json()).toEqual({
       error: INVALID_CREDENTIALS_MESSAGE,
     });
+  });
+
+  test('returns the stored admin role for an admin login', async () => {
+    const baseUrl = await startServer(async () => adminAccount);
+
+    const response = await postLogin(baseUrl, {
+      email: 'admin@friendshop.com',
+      password: 'Password1!',
+    });
+
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      customer: { role: string };
+    };
+    expect(body.customer.role).toBe('admin');
   });
 
   test('returns 429 with Retry-After when attempts are exceeded', async () => {
@@ -173,7 +206,7 @@ describe('POST /login', () => {
     let called = false;
     const baseUrl = await startServer(async () => {
       called = true;
-      return customer;
+      return customerAccount;
     });
 
     const response = await postLogin(baseUrl, {
@@ -191,7 +224,7 @@ describe('POST /login', () => {
   });
 
   test('returns 400 when fields are missing', async () => {
-    const baseUrl = await startServer(async () => customer);
+    const baseUrl = await startServer(async () => customerAccount);
 
     const response = await postLogin(baseUrl, {});
 
@@ -216,7 +249,7 @@ describe('POST /auth/refresh', () => {
   test('rotates the refresh token and returns new tokens', async () => {
     const received: string[] = [];
     const baseUrl = await startServer(
-      async () => customer,
+      async () => customerAccount,
       fakeAuth({
         refresh: async (token) => {
           received.push(token);
@@ -244,7 +277,7 @@ describe('POST /auth/refresh', () => {
   test('returns 401 without calling the service when the token is missing', async () => {
     let called = false;
     const baseUrl = await startServer(
-      async () => customer,
+      async () => customerAccount,
       fakeAuth({
         refresh: async () => {
           called = true;
@@ -261,7 +294,7 @@ describe('POST /auth/refresh', () => {
 
   test('returns 401 when the token is rejected', async () => {
     const baseUrl = await startServer(
-      async () => customer,
+      async () => customerAccount,
       fakeAuth({
         refresh: async () => {
           throw new InvalidRefreshTokenError();
@@ -284,7 +317,7 @@ describe('POST /auth/logout', () => {
   test('revokes the session', async () => {
     const revoked: string[] = [];
     const baseUrl = await startServer(
-      async () => customer,
+      async () => customerAccount,
       fakeAuth({
         logout: async (token) => {
           revoked.push(token);
@@ -301,7 +334,7 @@ describe('POST /auth/logout', () => {
   });
 
   test('returns 204 when there is no token', async () => {
-    const baseUrl = await startServer(async () => customer);
+    const baseUrl = await startServer(async () => customerAccount);
 
     const response = await postAuth(baseUrl, '/auth/logout');
 

@@ -64,9 +64,11 @@ INSERT INTO "OrderService"(
     "productID",
     "quantity"
 )
-VALUES
+SELECT order_line."orderID", order_line."productID", order_line.quantity
+FROM (VALUES
     (1, 1, 2),
     (1, 2, 1),
     (1, 3, 1),
     (1, 4, 1),
-    (2, 1, 1);
+    (2, 1, 1)
+) AS order_line("orderID", "productID", quantity);

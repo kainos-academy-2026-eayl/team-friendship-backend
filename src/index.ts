@@ -1,12 +1,14 @@
 import 'dotenv/config';
 import dotenv from 'dotenv';
 import { createApp } from './app';
+import { AdminController } from './controllers/adminController';
 import { AuthController } from './controllers/authController';
 import { BasketController } from './controllers/basketController';
 import { LoginController } from './controllers/loginController';
 import { OrderController } from './controllers/orderController';
 import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
+import { AdminRepository } from './repositories/adminRepository';
 import { BasketRepository } from './repositories/basketRepository';
 import { LoginRepository } from './repositories/loginRepository';
 import { OrderRepository } from './repositories/orderRepository';
@@ -48,7 +50,8 @@ const loginController = new LoginController(
 );
 app.use('/', loginController.router());
 
-const authController = new AuthController(accessTokens);
+const loginRepository = new LoginRepository(prisma);
+const authController = new AuthController(accessTokens, loginRepository);
 app.use('/', authController.router());
 
 const productController = new ProductController(
@@ -63,6 +66,12 @@ app.use('/', basketController.router());
 
 // Everything below this comment requires authentication
 app.use(authController.requireAuth);
+
+const adminController = new AdminController(
+  new AdminRepository(prisma),
+  loginRepository,
+);
+app.use('/admin', adminController.router());
 
 //Order history, order confirmation and checkout will require auth
 const orderController = new OrderController(

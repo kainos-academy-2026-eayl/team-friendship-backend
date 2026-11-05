@@ -45,6 +45,50 @@ curl http://localhost:3000/health
 
 Use `npm ci` rather than `npm install`. It installs the exact versions recorded in `package-lock.json`, so everyone on the team runs identical dependencies. Use `npm install` only when you are deliberately adding or upgrading a package.
 
+## Admin portal API
+
+The backend exposes the protected endpoints used by the frontend admin portal:
+- `POST /login` authenticates customer and staff accounts. Its
+  `customer.role` response field is `customer` for customers and the staff
+  member's role for staff accounts.
+- `GET /me` returns the authenticated customer or staff ID and current role
+  from the database.
+- `GET /admin/dashboard?period=today|week|month` returns sales metrics and all
+  products with fewer than five units in stock. Sales periods use the
+  `Europe/London` timezone; only `paid` and `completed` orders count as sales.
+- `POST /admin/products/:id/reorder` atomically adds 20 units to the product
+  stock. Only a staff account whose `staffRole` is `ADMIN` may access either
+  admin endpoint; customer accounts and other staff roles are denied.
+
+Staff accounts are stored separately from customers and include a unique email
+and an Argon2-hashed password. The staff availability field is informational and
+does not determine admin authorization. The staff-account migration transfers
+existing customer accounts with the `ADMIN` role, including their active
+refresh-token sessions, before removing the customer role column.
+
+Apply pending migrations before starting the updated backend:
+
+```sh
+npx prisma migrate deploy
+```
+
+Set `ADMIN_PASSWORD` in the local, git-ignored `.env` file, then provision the
+administrator account with:
+
+```sh
+npm run admin:provision
+```
+
+The script creates or updates `admin@friendshop.com` in the `Staff` table,
+stores an Argon2 password hash, and assigns the `ADMIN` staff role. It does not
+store the password in the source code. Customer registration cannot create or
+change staff roles.
+
+Revenue is calculated using each ordered product's current `productPrice`
+multiplied by the order-line quantity. Order lines do not store a price
+snapshot, so changing a product's price also changes the revenue shown for
+previous orders containing that product.
+
 ## Making it your own
 
 After clicking **Use this template** on GitHub and creating your own repository:
