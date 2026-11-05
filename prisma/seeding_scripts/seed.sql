@@ -47,7 +47,7 @@ VALUES
     ('Eva', 'Rouffet', '99 Peanuts Street', 'BT16 DDD', 'eva@example.com', '0445566778', '$argon2id$v=19$m=19456,t=2,p=1$cBWIwKee85ipl5fHE3m3hg$wXljgOWvNIWa5eNVocZ1Z2Fy/r8ExJ0rxW7DVcPQCNg');
 
 
-INSERT INTO "Order" (
+
 INSERT INTO "Order"(
     "orderID",
     "customerID",
@@ -56,15 +56,15 @@ INSERT INTO "Order"(
 )
 VALUES
     (1, 1, DEFAULT,'completed'),
-    (2, 2, DEFAULT,'completed'),
-    (3, 3, DEFAULT,'completed'),
+    (2, 6, DEFAULT,'completed'),
+    (3, 6, DEFAULT,'completed'),
     (4, 4, DEFAULT,'completed'),
     (5, 5, DEFAULT,'completed'),
     (6, 2, '2026-10-10 09:45:33', 'completed'),
-    (7, 3, '2026-10-14 18:12:47', 'paid'),
+    (7, 6, '2026-10-14 18:12:47', 'paid'),
     (8, 1, '2026-10-19 11:30:05', 'completed'),
-    (9, 4, '2026-10-22 16:58:22', 'paid'),
-    (10, 2, '2026-10-25 13:17:49', 'completed'),
+    (9, 6, '2026-10-22 16:58:22', 'paid'),
+    (10, 6, '2026-10-25 13:17:49', 'completed'),
     (11, 3, '2026-10-28 10:05:31', 'paid'),
     (12, 1, '2026-11-01 15:41:08', 'completed'),
     (13, 4, '2026-11-03 08:29:54', 'paid'),
@@ -73,16 +73,6 @@ VALUES
 -- Explicit IDs bypass the sequence, so move it on to avoid clashes with orders created by the API.
 SELECT setval(pg_get_serial_sequence('"Order"', 'orderID'), (SELECT MAX("orderID") FROM "Order"));
 
-INSERT INTO "OrderService"(
-    "orderID",
-    "customerID",
-    "dateCreated",
-    "status"
-)
-VALUES
-    (1, 6, '2026-11-01 10:00:00', 'Delivered'),
-    (2, 6, '2026-11-03 14:30:00', 'Pending'),
-    (3, 4, '2026-10-15 09:00:00', 'Delivered');
 
 INSERT INTO "OrderService" (
     "orderID",
