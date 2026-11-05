@@ -27,6 +27,13 @@ export class BasketRepository {
     });
   }
 
+  updateQuantity(basketID: number, quantity: number): Promise<Basket> {
+    return this.prisma.basket.update({
+      where: { basketID },
+      data: { quantity },
+    });
+  }
+
   removeItem(basketID: number): Promise<Basket> {
     return this.prisma.basket.delete({
       where: { basketID },
