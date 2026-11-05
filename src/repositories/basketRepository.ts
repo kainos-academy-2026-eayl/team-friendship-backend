@@ -7,6 +7,9 @@ export class BasketRepository {
     return this.prisma.basket.findMany({
       where: { customerID },
       orderBy: { basketID: 'asc' },
+      include: {
+        product: true,
+      },
     });
   }
 
@@ -21,6 +24,13 @@ export class BasketRepository {
         productID,
         quantity,
       },
+    });
+  }
+
+  updateQuantity(basketID: number, quantity: number): Promise<Basket> {
+    return this.prisma.basket.update({
+      where: { basketID },
+      data: { quantity },
     });
   }
 
