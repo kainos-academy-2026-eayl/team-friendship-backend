@@ -27,17 +27,15 @@ model Customer {
   basketItems         Basket[]
 }
 
-  orders      Order[]
-  basketItems Basket[]
 model Staff {
-  staffID             Int            @id @default(autoincrement())
-  staffForename       String
-  staffSurname        String
-  staffRole           String         @default("STAFF")
-  staffavailability   String         @default("AVAILABLE")
-  staffEmail          String         @unique
-  staffPassword       String
-  refreshTokens       RefreshToken[]
+  staffID           Int            @id @default(autoincrement())
+  staffForename     String
+  staffSurname      String
+  staffRole         String         @default("STAFF")
+  staffavailability String         @default("AVAILABLE")
+  staffEmail        String         @unique
+  staffPassword     String
+  refreshTokens     RefreshToken[]
 }
 
 model RefreshToken {
