@@ -24,6 +24,7 @@ model Customer {
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   orders              Order[]
+  basketItems         Basket[]
 }
 
 model Staff {
