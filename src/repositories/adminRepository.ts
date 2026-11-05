@@ -33,10 +33,12 @@ export class AdminRepository {
       >(Prisma.sql`
         SELECT
           COUNT(DISTINCT orders."orderID")::INTEGER AS "totalOrders",
-          COALESCE(SUM(order_lines.quantity * order_lines."unitPrice"), 0)::DOUBLE PRECISION AS revenue
+          COALESCE(SUM(order_lines.quantity * products."productPrice"), 0)::DOUBLE PRECISION AS revenue
         FROM "Order" AS orders
         LEFT JOIN "OrderService" AS order_lines
           ON order_lines."orderID" = orders."orderID"
+        LEFT JOIN "Product" AS products
+          ON products."productID" = order_lines."productID"
         WHERE orders."dateCreated" >= (
           (CASE ${period}
             WHEN 'today' THEN date_trunc('day', CURRENT_TIMESTAMP AT TIME ZONE 'Europe/London')

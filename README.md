@@ -84,11 +84,10 @@ stores an Argon2 password hash, and assigns the `ADMIN` staff role. It does not
 store the password in the source code. Customer registration cannot create or
 change staff roles.
 
-Each order line now stores its purchase-time unit price so future revenue is
-based on the order price rather than the current product price. The migration
-backfills existing lines from today's product price because historical prices
-were not previously stored; revenue for those older orders is therefore an
-estimate.
+Revenue is calculated using each ordered product's current `productPrice`
+multiplied by the order-line quantity. Order lines do not store a price
+snapshot, so changing a product's price also changes the revenue shown for
+previous orders containing that product.
 
 ## Making it your own
 

@@ -96,7 +96,6 @@ model OrderService {
   orderID   Int
   productID Int
   quantity  Int
-  unitPrice Decimal @db.Decimal(10, 2)
   order     Order   @relation(fields: [orderID], references: [orderID])
   product   Product @relation(fields: [productID], references: [productID])
 

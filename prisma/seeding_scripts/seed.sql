@@ -60,16 +60,13 @@ VALUES
 INSERT INTO "OrderService"(
     "orderID",
     "productID",
-    "quantity",
-    "unitPrice"
+    "quantity"
 )
-SELECT order_line."orderID", order_line."productID", order_line.quantity,
-       product."productPrice"::DECIMAL(10, 2)
+SELECT order_line."orderID", order_line."productID", order_line.quantity
 FROM (VALUES
     (1, 1, 2),
     (1, 2, 1),
     (1, 3, 1),
     (1, 4, 1),
     (2, 1, 1)
-) AS order_line("orderID", "productID", quantity)
-JOIN "Product" AS product ON product."productID" = order_line."productID";
+) AS order_line("orderID", "productID", quantity);
