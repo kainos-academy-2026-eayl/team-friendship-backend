@@ -50,11 +50,11 @@ INSERT INTO "Order"(
     "status"
 )
 VALUES
-    (1, 1, 'pending'),
-    (2, 2, 'pending'),
-    (3, 3, 'pending'),
-    (4, 4, 'pending'),
-    (5, 5, 'pending');
+    (1, 1, 'completed'),
+    (2, 2, 'completed'),
+    (3, 3, 'completed'),
+    (4, 4, 'completed'),
+    (5, 5, 'completed');
 
 -- Explicit IDs bypass the sequence, so move it on to avoid clashes with orders created by the API.
 SELECT setval(pg_get_serial_sequence('"Order"', 'orderID'), (SELECT MAX("orderID") FROM "Order"));
