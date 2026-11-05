@@ -11,21 +11,21 @@ INSERT INTO "Product"(
     "productStock"
 )
 VALUES
-    ('Bag of Marbles', 'Bold and shiny, perfect for all your taskmaster needs', 'Toys', 9.99, 'bagOfMarbles.webp', 25),
+    ('Bag of Marbles', 'Bold and shiny, perfect for all your taskmaster needs', 'Toys', 9.99, 'bagOfMarbles.webp', 2),
     ('Pool Set', 'Complete pool set for hours of fun', 'Toys', 49.99, 'poolSet.webp', 10),
     ('Hula Hoop', 'Classic toy for outdoor fun', 'Toys', 14.99, 'hulaHoop.webp', 25),
     ('Furby', 'Interactive electronic toy', 'Toys', 99.99, 'furby.webp', 10),
-    ('Lego Set A', 'Creative building blocks for endless fun', 'Lego', 59.99, 'legoSet1.webp', 15),
-    ('Lego Set B', 'Creative building blocks set', 'Lego', 79.99, 'legoSet2.webp', 20),
+    ('Lego Set A', 'Creative building blocks for endless fun', 'Lego', 59.99, 'legoSet1.webp', 1),
+    ('Lego Set B', 'Creative building blocks set', 'Lego', 79.99, 'legoSet2.webp', 7),
     ('Lego Set C', 'Creative building blocks set', 'Lego', 89.99, 'legoSet3.webp', 25),
-    ('Lego Set D', 'Creative building blocks set', 'Lego', 99.99, 'legoSet4.webp', 30),
+    ('Lego Set D', 'Creative building blocks set', 'Lego', 99.99, 'legoSet4.webp', 0),
     ('Monopoly', 'Classic board game for family fun', 'Board Games', 29.99, 'monopoly.webp', 15),
     ('Cluedo', 'Classic detective board game', 'Board Games', 24.99, 'cluedo.webp', 15),
     ('Game of Life', 'Classic board game for family fun', 'Board Games', 34.99, 'gameOfLife.webp', 15),
     ('Catan', 'Popular strategy board game', 'Board Games', 39.99, 'catan.webp', 15),
     ('Barbie A', 'Classic Barbie doll', 'Dolls', 19.99, 'barbieA.webp', 15),
     ('Barbie B', 'Classic Barbie doll', 'Dolls', 19.99, 'barbieB.webp', 15),
-    ('Monster High A', 'Classic Monster High doll', 'Dolls', 19.99, 'monsterHighA.webp', 15),
+    ('Monster High A', 'Classic Monster High doll', 'Dolls', 19.99, 'monsterHighA.webp', 0),
     ('Monster High B', 'Classic Monster High doll', 'Dolls', 19.99, 'monsterHighB.webp', 15);
 
 INSERT INTO "Customer"(
@@ -51,11 +51,11 @@ INSERT INTO "Order"(
     "status"
 )
 VALUES
-    (1, 1, NULL,'completed'),
-    (2, 2, ,'completed'),
-    (3, 3, NULL,'completed'),
-    (4, 4, NULL,'completed'),
-    (5, 5, NULL,'completed'),
+    (1, 1, DEFAULT,'completed'),
+    (2, 2, DEFAULT,'completed'),
+    (3, 3, DEFAULT,'completed'),
+    (4, 4, DEFAULT,'completed'),
+    (5, 5, DEFAULT,'completed'),
     (6, 2, '2026-10-10 09:45:33', 'completed'),
     (7, 3, '2026-10-14 18:12:47', 'paid'),
     (8, 1, '2026-10-19 11:30:05', 'completed'),
@@ -106,5 +106,5 @@ FROM (VALUES
     (13, 12, 1),
     (14, 7, 1),
     (14, 14, 2),
-    (14, 4, 1);
+    (14, 4, 1)
 ) AS order_line("orderID", "productID", quantity);
