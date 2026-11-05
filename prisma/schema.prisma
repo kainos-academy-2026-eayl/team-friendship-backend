@@ -58,10 +58,10 @@ model PasswordResetToken {
 }
 
 model Product {
-  productID          Int    @id @default(autoincrement())
+  productID          Int     @id @default(autoincrement())
   productName        String
   productDescription String
-  productCategory    String
+  productCategory    String?
   productPrice       Float
   productImage       String
   productStock       Int

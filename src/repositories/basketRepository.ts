@@ -7,6 +7,9 @@ export class BasketRepository {
     return this.prisma.basket.findMany({
       where: { customerID },
       orderBy: { basketID: 'asc' },
+      include: {
+        product: true,
+      },
     });
   }
 

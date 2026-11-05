@@ -1,0 +1,118 @@
+src/controllers/basketController.ts:2:8 lint/style/useImportType  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ! All these imports are only used as types.
+  
+    1 │ import { Router, type Request, type Response } from 'express';
+  > 2 │ import { BasketService } from '../services/basketService';
+      │        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    3 │ 
+    4 │ export class BasketController {
+  
+  i Importing the types with import type ensures that they are removed by the compilers and avoids loading unnecessary modules.
+  
+  i Safe fix: Use import type.
+  
+    2 │ import·type·{·BasketService·}·from·'../services/basketService';
+      │        +++++                                                   
+
+src/controllers/basketController.ts:1:1 assist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Sort the imported names.
+  
+  > 1 │ import { Router, type Request, type Response } from 'express';
+      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 │ import { BasketService } from '../services/basketService';
+    3 │ 
+  
+  i Safe fix: Organize imports and exports (Biome)
+  
+     1    │ - import·{·Router,·type·Request,·type·Response·}·from·'express';
+        1 │ + import·{·type·Request,·type·Response,·Router·}·from·'express';
+     2  2 │   import { BasketService } from '../services/basketService';
+     3  3 │   
+  
+
+src/controllers/basketController.ts format ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Formatter would have printed the following content:
+  
+     3  3 │   
+     4  4 │   export class BasketController {
+     5    │ - ····constructor(
+     6    │ - ········private·readonly·basketService:·BasketService,
+     7    │ - ····)·{·}
+        5 │ + ··constructor(private·readonly·basketService:·BasketService)·{}
+     8  6 │   
+     9    │ - ····private·readonly·getBasket·=·async·(
+    10    │ - ········req:·Request,
+    11    │ - ········res:·Response,
+    12    │ - ····):·Promise<void>·=>·{
+    13    │ - ········const·customerID·=·Number(req.params.customerID);
+        7 │ + ··private·readonly·getBasket·=·async·(
+        8 │ + ····req:·Request,
+        9 │ + ····res:·Response,
+       10 │ + ··):·Promise<void>·=>·{
+       11 │ + ····const·customerID·=·Number(req.params.customerID);
+    14 12 │   
+    15    │ - ········const·basket·=·await·this.basketService.getBasket(customerID);
+       13 │ + ····const·basket·=·await·this.basketService.getBasket(customerID);
+    16 14 │   
+    17    │ - ········res.json({·basket·});
+    18    │ - ····};
+       15 │ + ····res.json({·basket·});
+       16 │ + ··};
+    19 17 │   
+    20    │ - ····private·readonly·addToBasket·=·async·(
+    21    │ - ········req:·Request,
+    22    │ - ········res:·Response,
+    23    │ - ····):·Promise<void>·=>·{
+    24    │ - ········const·{·customerID,·productID,·quantity·}·=·req.body;
+       18 │ + ··private·readonly·addToBasket·=·async·(
+       19 │ + ····req:·Request,
+       20 │ + ····res:·Response,
+       21 │ + ··):·Promise<void>·=>·{
+       22 │ + ····const·{·customerID,·productID,·quantity·}·=·req.body;
+    25 23 │   
+    26    │ - ········const·basketItem·=·await·this.basketService.addToBasket(
+    27    │ - ············customerID,
+    28    │ - ············productID,
+    29    │ - ············quantity,
+    30    │ - ········);
+       24 │ + ····const·basketItem·=·await·this.basketService.addToBasket(
+       25 │ + ······customerID,
+       26 │ + ······productID,
+       27 │ + ······quantity,
+       28 │ + ····);
+    31 29 │   
+    32    │ - ········res.status(201).json(basketItem);
+    33    │ - ····};
+       30 │ + ····res.status(201).json(basketItem);
+       31 │ + ··};
+    34 32 │   
+    35    │ - ····router():·Router·{
+    36    │ - ········const·router·=·Router();
+       33 │ + ··router():·Router·{
+       34 │ + ····const·router·=·Router();
+    37 35 │   
+    38    │ - ········router.get('/basket/:customerID',·this.getBasket);
+    39    │ - ········router.post('/basket',·this.addToBasket);
+       36 │ + ····router.get('/basket/:customerID',·this.getBasket);
+       37 │ + ····router.post('/basket',·this.addToBasket);
+    40 38 │   
+    41    │ - ········return·router;
+    42    │ - ····}
+    43    │ - }
+       39 │ + ····return·router;
+       40 │ + ··}
+       41 │ + }
+       42 │ + 
+  
+
+Checked 52 files in 10ms. No fixes applied.
+Found 2 errors.
+Found 1 warning.
+check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × Some errors were emitted while running checks.
+  
+

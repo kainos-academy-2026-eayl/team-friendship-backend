@@ -30,11 +30,23 @@ export class BasketController {
     res.status(201).json(basketItem);
   };
 
+  private readonly removeFromBasket = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const basketID = Number(req.params.basketID);
+
+    const item = await this.basketService.removeFromBasket(basketID);
+
+    res.json(item);
+  };
+
   router(): Router {
     const router = Router();
 
     router.get('/basket/:customerID', this.getBasket);
     router.post('/basket', this.addToBasket);
+    router.delete('/basket/:basketID', this.removeFromBasket);
 
     return router;
   }
