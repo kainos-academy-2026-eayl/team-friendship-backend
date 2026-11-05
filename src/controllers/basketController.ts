@@ -8,8 +8,6 @@ export class BasketController {
     req: Request,
     res: Response,
   ): Promise<void> => {
-    console.log('Basket endpoint hit');
-
     const customerID = Number(req.params.customerID);
 
     const basket = await this.basketService.getBasket(customerID);
@@ -17,10 +15,26 @@ export class BasketController {
     res.json({ basket });
   };
 
+  private readonly addToBasket = async (
+    req: Request,
+    res: Response,
+  ): Promise<void> => {
+    const { customerID, productID, quantity } = req.body;
+
+    const basketItem = await this.basketService.addToBasket(
+      customerID,
+      productID,
+      quantity,
+    );
+
+    res.status(201).json(basketItem);
+  };
+
   router(): Router {
     const router = Router();
 
     router.get('/basket/:customerID', this.getBasket);
+    router.post('/basket', this.addToBasket);
 
     return router;
   }
