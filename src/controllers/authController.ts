@@ -22,7 +22,7 @@ const BEARER_PATTERN =
   /^Bearer ([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/i;
 
 type AccessTokenVerifier = Pick<AccessTokenService, 'verify'>;
-type PrincipalRoleRepository = Pick<LoginRepository, 'findRoleByPrincipal'>;
+type PrincipalRoleRepository = Pick<LoginRepository, 'findProfileByPrincipal'>;
 
 export class AuthController {
   constructor(
@@ -65,17 +65,18 @@ export class AuthController {
         return;
       }
 
-      const role = await this.accounts.findRoleByPrincipal(principal);
-      if (!role) {
+      const profile = await this.accounts.findProfileByPrincipal(principal);
+      if (!profile) {
         res.status(401).json({ error: 'Account no longer exists' });
         return;
       }
       res
+        .set('Cache-Control', 'no-store')
         .status(200)
         .json(
           principal.type === 'staff'
-            ? { staffID: principal.id, role }
-            : { customerId: principal.id, role },
+            ? { staffID: principal.id, ...profile }
+            : { customerId: principal.id, ...profile },
         );
     } catch (error) {
       console.error('Unable to load authenticated account', error);
