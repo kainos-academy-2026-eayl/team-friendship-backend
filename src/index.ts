@@ -5,7 +5,7 @@ import { AdminController } from './controllers/adminController';
 import { AuthController } from './controllers/authController';
 import { BasketController } from './controllers/basketController';
 import { LoginController } from './controllers/loginController';
-import { OrderController ) from './controllers/orderController';
+import { OrderController } from './controllers/orderController';
 import { OrderHistoryController } from './controllers/orderHistoryController';
 import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';

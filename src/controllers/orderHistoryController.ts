@@ -36,7 +36,11 @@ export class OrderHistoryController {
       return;
     }
 
-    if (result.data.customerID !== res.locals.customerId) {
+    const principal = res.locals.principal;
+    if (
+      principal?.type !== 'customer' ||
+      result.data.customerID !== principal.id
+    ) {
       res.status(403).json({ error: 'Forbidden' });
       return;
     }

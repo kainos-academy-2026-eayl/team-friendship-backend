@@ -28,7 +28,9 @@ const orders = [
 
 async function startServer(findOrders = vi.fn().mockResolvedValue(orders)) {
   const app = express();
-  const authController = new AuthController(tokens);
+  const authController = new AuthController(tokens, {
+    findRoleByPrincipal: async () => 'customer',
+  });
   const controller = new OrderHistoryController(
     new OrderHistoryService({ findOrderHistoryByCustomerID: findOrders }),
   );
