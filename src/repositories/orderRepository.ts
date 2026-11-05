@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from '../generated/prisma/client';
-import type { OrderItem } from '../models/orderModel';
+import type { DeliveryAddress, OrderItem } from '../models/orderModel';
 import {
   InsufficientStockError,
   OrderProductNotFoundError,
@@ -21,8 +21,20 @@ export const INITIAL_ORDER_STATUS = 'pending';
 export class OrderRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  create(customerID: number, items: OrderItem[]): Promise<OrderWithServices> {
+  create(
+    customerID: number,
+    items: OrderItem[],
+    deliveryAddress?: DeliveryAddress,
+  ): Promise<OrderWithServices> {
     return this.prisma.$transaction(async (tx) => {
+      // Fall back to the customer's saved address when no alternative is supplied.
+      const { address, postcode } =
+        deliveryAddress ??
+        (await tx.customer.findUniqueOrThrow({
+          where: { customerID },
+          select: { address: true, postcode: true },
+        }));
+
       // Iterate over a copy sorted by productID so every order
       // acquires product locks in the same order.
       for (const { productID, quantity } of [...items].sort(
@@ -48,6 +60,8 @@ export class OrderRepository {
         data: {
           customerID,
           status: INITIAL_ORDER_STATUS,
+          address,
+          postcode,
           orderServices: { create: items },
         },
         include: orderWithServices,

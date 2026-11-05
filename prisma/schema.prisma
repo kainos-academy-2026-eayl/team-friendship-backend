@@ -88,6 +88,8 @@ model Order {
   customerID    Int
   dateCreated   DateTime       @default(now())
   status        String
+  address       String
+  postcode      String
   customer      Customer       @relation(fields: [customerID], references: [customerID])
   orderServices OrderService[]
 }

@@ -1,4 +1,4 @@
-import type { OrderItem } from '../models/orderModel';
+import type { DeliveryAddress, OrderItem } from '../models/orderModel';
 import type {
   OrderRepository,
   OrderWithServices,
@@ -36,8 +36,9 @@ export class OrderService {
   createOrder(
     customerID: number,
     items: OrderItem[],
+    deliveryAddress?: DeliveryAddress,
   ): Promise<OrderWithServices> {
-    return this.repository.create(customerID, items);
+    return this.repository.create(customerID, items, deliveryAddress);
   }
 
   // Orders belonging to other customers are reported as missing so their existence is not revealed.

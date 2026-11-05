@@ -17,6 +17,8 @@ const ORDER: OrderWithServices = {
   customerID: CUSTOMER_ID,
   dateCreated: new Date('2026-11-04T12:00:00Z'),
   status: 'pending',
+  address: '123 Town Street',
+  postcode: 'BT16 AAA',
   orderServices: [],
 };
 
@@ -92,6 +94,24 @@ describe('POST /orders', () => {
     expect(service.createOrder).toHaveBeenCalledWith(
       CUSTOMER_ID,
       VALID_BODY.orderServices,
+      undefined,
+    );
+  });
+
+  test('passes an alternative delivery address to the service', async () => {
+    const { baseUrl, service } = await startServer();
+
+    const response = await postOrder(baseUrl, {
+      ...VALID_BODY,
+      address: '  14 Gift Lane ',
+      postcode: 'BT9 5AB',
+    });
+
+    expect(response.status).toBe(201);
+    expect(service.createOrder).toHaveBeenCalledWith(
+      CUSTOMER_ID,
+      VALID_BODY.orderServices,
+      { address: '14 Gift Lane', postcode: 'BT9 5AB' },
     );
   });
 
@@ -123,6 +143,13 @@ describe('POST /orders', () => {
       },
     ],
     ['missing customer id', { orderServices: [{ productID: 1, quantity: 1 }] }],
+    ['address without postcode', { ...VALID_BODY, address: '14 Gift Lane' }],
+    ['postcode without address', { ...VALID_BODY, postcode: 'BT9 5AB' }],
+    ['blank address', { ...VALID_BODY, address: '   ', postcode: 'BT9 5AB' }],
+    [
+      'null postcode',
+      { ...VALID_BODY, address: '14 Gift Lane', postcode: null },
+    ],
   ])('returns 400 for %s', async (_name, body) => {
     const { baseUrl, service } = await startServer();
 

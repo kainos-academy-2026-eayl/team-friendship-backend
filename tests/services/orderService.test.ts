@@ -11,6 +11,8 @@ function order(customerID: number): OrderWithServices {
     customerID,
     dateCreated: new Date('2026-11-04T12:00:00Z'),
     status: 'pending',
+    address: '123 Town Street',
+    postcode: 'BT16 AAA',
     orderServices: [],
   };
 }
@@ -30,7 +32,16 @@ describe('OrderService', () => {
     const items = [{ productID: 3, quantity: 2 }];
 
     await expect(service.createOrder(1, items)).resolves.toEqual(order(1));
-    expect(repository.create).toHaveBeenCalledWith(1, items);
+    expect(repository.create).toHaveBeenCalledWith(1, items, undefined);
+  });
+
+  test('createOrder passes an alternative delivery address to the repository', async () => {
+    const { service, repository } = createService();
+    const items = [{ productID: 3, quantity: 2 }];
+    const deliveryAddress = { address: '14 Gift Lane', postcode: 'BT9 5AB' };
+
+    await service.createOrder(1, items, deliveryAddress);
+    expect(repository.create).toHaveBeenCalledWith(1, items, deliveryAddress);
   });
 
   test('getOrderForCustomer returns an order owned by the customer', async () => {
