@@ -36,6 +36,11 @@ export class OrderHistoryController {
       return;
     }
 
+    if (result.data.customerID !== res.locals.customerId) {
+      res.status(403).json({ error: 'Forbidden' });
+      return;
+    }
+
     const orderHistory = await this.service.getOrderHistoryByCustomerID(
       result.data.customerID,
     );
