@@ -13,7 +13,7 @@ type OrderHistoryRepositoryContract = Pick<
 >;
 
 export class OrderHistoryService {
-  constructor(public readonly repository: OrderHistoryRepositoryContract) {}
+  constructor(private readonly repository: OrderHistoryRepositoryContract) {}
 
   async getOrderHistoryByCustomerID(customerID: number) {
     const orders =
