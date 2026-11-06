@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "DiscountStatus" AS ENUM ('ACTIVE', 'EXPIRED', 'DISABLED');
+
 -- CreateTable
 CREATE TABLE "Customer" (
     "customerID" SERIAL NOT NULL,
@@ -57,7 +60,7 @@ CREATE TABLE "Product" (
     "productID" SERIAL NOT NULL,
     "productName" TEXT NOT NULL,
     "productDescription" TEXT NOT NULL,
-    "productCategory" TEXT NOT NULL,
+    "productCategory" TEXT,
     "productPrice" DOUBLE PRECISION NOT NULL,
     "productImage" TEXT NOT NULL,
     "productStock" INTEGER NOT NULL,
@@ -71,6 +74,11 @@ CREATE TABLE "Order" (
     "customerID" INTEGER NOT NULL,
     "dateCreated" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" TEXT NOT NULL,
+    "address" TEXT NOT NULL,
+    "postcode" TEXT NOT NULL,
+    "discountCode" TEXT,
+    "discountAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "discountCodeID" INTEGER,
 
     CONSTRAINT "Order_pkey" PRIMARY KEY ("orderID")
 );
@@ -92,6 +100,17 @@ CREATE TABLE "Basket" (
     "quantity" INTEGER NOT NULL,
 
     CONSTRAINT "Basket_pkey" PRIMARY KEY ("basketID")
+);
+
+-- CreateTable
+CREATE TABLE "DiscountCode" (
+    "id" SERIAL NOT NULL,
+    "code" TEXT NOT NULL,
+    "discount" INTEGER NOT NULL,
+    "status" "DiscountStatus" NOT NULL DEFAULT 'ACTIVE',
+    "expiryDate" TIMESTAMP(3),
+
+    CONSTRAINT "DiscountCode_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -124,6 +143,9 @@ CREATE INDEX "Basket_customerID_idx" ON "Basket"("customerID");
 -- CreateIndex
 CREATE INDEX "Basket_productID_idx" ON "Basket"("productID");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "DiscountCode_code_key" ON "DiscountCode"("code");
+
 -- AddForeignKey
 ALTER TABLE "RefreshToken" ADD CONSTRAINT "RefreshToken_customerID_fkey" FOREIGN KEY ("customerID") REFERENCES "Customer"("customerID") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -135,6 +157,9 @@ ALTER TABLE "PasswordResetToken" ADD CONSTRAINT "PasswordResetToken_customerEmai
 
 -- AddForeignKey
 ALTER TABLE "PasswordResetToken" ADD CONSTRAINT "PasswordResetToken_refreshTokenId_fkey" FOREIGN KEY ("refreshTokenId") REFERENCES "RefreshToken"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Order" ADD CONSTRAINT "Order_discountCodeID_fkey" FOREIGN KEY ("discountCodeID") REFERENCES "DiscountCode"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Order" ADD CONSTRAINT "Order_customerID_fkey" FOREIGN KEY ("customerID") REFERENCES "Customer"("customerID") ON DELETE RESTRICT ON UPDATE CASCADE;
