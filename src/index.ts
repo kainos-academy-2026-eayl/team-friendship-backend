@@ -4,6 +4,7 @@ import { createApp } from './app';
 import { AdminController } from './controllers/adminController';
 import { AuthController } from './controllers/authController';
 import { BasketController } from './controllers/basketController';
+import { customerDetailsRouter } from './controllers/customerDetailsController';
 import { CustomerAddressController } from './controllers/customerAddressController';
 import { DiscountController } from './controllers/discountController';
 import { LoginController } from './controllers/loginController';
@@ -13,6 +14,7 @@ import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
 import { AdminRepository } from './repositories/adminRepository';
 import { BasketRepository } from './repositories/basketRepository';
+import { CustomerDetailsRepository } from './repositories/customerDetailsRepository';
 import { CustomerAddressRepository } from './repositories/customerAddressRepository';
 import { DiscountCodeRepository } from './repositories/discountCodeRepository';
 import { LoginRepository } from './repositories/loginRepository';
@@ -68,6 +70,7 @@ app.use('/', productController.router());
 
 // Everything below this comment requires authentication
 app.use(authController.requireAuth);
+app.use(customerDetailsRouter(new CustomerDetailsRepository(prisma)));
 
 const adminController = new AdminController(
   new AdminRepository(prisma),

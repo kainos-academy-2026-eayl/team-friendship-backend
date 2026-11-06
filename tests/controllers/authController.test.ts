@@ -12,8 +12,14 @@ async function startServer(role: string | null = 'customer') {
   app.use(
     '/',
     new AuthController(tokens, {
-      findRoleByPrincipal: async (principal) =>
-        principal.type === 'staff' ? role : 'customer',
+      findProfileByPrincipal: async (principal) => {
+        if (role === null) return null;
+        return {
+          role: principal.type === 'staff' ? role : 'customer',
+          firstName: 'Ada',
+          surname: 'Lovelace',
+        };
+      },
     }).router(),
   );
   const server = app.listen(0, '127.0.0.1');
@@ -38,7 +44,13 @@ describe('AuthController.requireAuth', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ customerId: 42, role: 'customer' });
+    expect(await response.json()).toEqual({
+      customerId: 42,
+      role: 'customer',
+      firstName: 'Ada',
+      surname: 'Lovelace',
+    });
+    expect(response.headers.get('cache-control')).toBe('no-store');
   });
 
   test('returns the database role for an authenticated admin staff member', async () => {
@@ -50,7 +62,24 @@ describe('AuthController.requireAuth', () => {
     });
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ staffID: 42, role: 'admin' });
+    expect(await response.json()).toEqual({
+      staffID: 42,
+      role: 'admin',
+      firstName: 'Ada',
+      surname: 'Lovelace',
+    });
+  });
+
+  test('returns 401 when the account no longer exists', async () => {
+    const baseUrl = await startServer(null);
+    const token = await tokens.sign(42);
+    const response = await fetch(`${baseUrl}/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({
+      error: 'Account no longer exists',
+    });
   });
 
   test('returns 401 when the header is missing', async () => {
