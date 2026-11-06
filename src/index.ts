@@ -4,6 +4,8 @@ import { createApp } from './app';
 import { AdminController } from './controllers/adminController';
 import { AuthController } from './controllers/authController';
 import { BasketController } from './controllers/basketController';
+import { CustomerAddressController } from './controllers/customerAddressController';
+import { DiscountController } from './controllers/discountController';
 import { LoginController } from './controllers/loginController';
 import { OrderController } from './controllers/orderController';
 import { OrderHistoryController } from './controllers/orderHistoryController';
@@ -11,6 +13,8 @@ import { ProductController } from './controllers/productController';
 import { createPrismaClient } from './db/prisma';
 import { AdminRepository } from './repositories/adminRepository';
 import { BasketRepository } from './repositories/basketRepository';
+import { CustomerAddressRepository } from './repositories/customerAddressRepository';
+import { DiscountCodeRepository } from './repositories/discountCodeRepository';
 import { LoginRepository } from './repositories/loginRepository';
 import { OrderHistoryRepository } from './repositories/orderHistoryRepository';
 import { OrderRepository } from './repositories/orderRepository';
@@ -71,8 +75,10 @@ const adminController = new AdminController(
 );
 app.use('/admin', adminController.router());
 
+const discountCodes = new DiscountCodeRepository(prisma);
+
 const orderController = new OrderController(
-  new OrderService(new OrderRepository(prisma)),
+  new OrderService(new OrderRepository(prisma), discountCodes),
 );
 app.use('/', orderController.router());
 
@@ -80,6 +86,13 @@ const basketController = new BasketController(
   new BasketService(new BasketRepository(prisma)),
 );
 app.use('/', basketController.router());
+
+const customerAddressController = new CustomerAddressController(
+  new CustomerAddressRepository(prisma),
+);
+app.use('/', customerAddressController.router());
+
+app.use('/', new DiscountController(discountCodes).router());
 
 // Everything below this comment requires authentication
 app.use(authController.requireAuth);

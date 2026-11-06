@@ -7,6 +7,7 @@ import {
 import { z } from 'zod';
 import {
   InsufficientStockError,
+  InvalidDiscountCodeError,
   OrderNotFoundError,
   OrderProductNotFoundError,
   type OrderService,
@@ -26,25 +27,47 @@ function positiveIdParam(label: string) {
     .pipe(positiveId(label));
 }
 
-export const createOrderSchema = z.object({
-  customerID: positiveId('Customer id'),
-  orderServices: z
-    .array(
-      z.object({
-        productID: positiveId('Product id'),
-        quantity: positiveId('Quantity'),
-      }),
-    )
-    .min(1, { error: 'Order must contain at least one product' })
-    .max(MAX_ORDER_LINES, {
-      error: `Order cannot contain more than ${MAX_ORDER_LINES} products`,
-    })
-    .refine(
-      (items) =>
-        new Set(items.map((item) => item.productID)).size === items.length,
-      { error: 'Each product may only appear once per order' },
-    ),
-});
+function requiredText(label: string, maxLength: number) {
+  return z
+    .string({ error: `${label} must be text` })
+    .trim()
+    .min(1, { error: `${label} cannot be empty` })
+    .max(maxLength, {
+      error: `${label} cannot be longer than ${maxLength} characters`,
+    });
+}
+
+export const createOrderSchema = z
+  .object({
+    customerID: positiveId('Customer id'),
+    // Optional alternative delivery address; the customer's saved address is used when omitted.
+    address: requiredText('Address', 255).optional(),
+    postcode: requiredText('Postcode', 10).optional(),
+    discountCode: requiredText('Discount code', 50).optional(),
+    orderServices: z
+      .array(
+        z.object({
+          productID: positiveId('Product id'),
+          quantity: positiveId('Quantity'),
+        }),
+      )
+      .min(1, { error: 'Order must contain at least one product' })
+      .max(MAX_ORDER_LINES, {
+        error: `Order cannot contain more than ${MAX_ORDER_LINES} products`,
+      })
+      .refine(
+        (items) =>
+          new Set(items.map((item) => item.productID)).size === items.length,
+        { error: 'Each product may only appear once per order' },
+      ),
+  })
+  .refine(
+    (body) => (body.address === undefined) === (body.postcode === undefined),
+    {
+      error: 'Address and postcode must be provided together',
+      path: ['address'],
+    },
+  );
 
 export const orderIdSchema = z.object({ id: positiveIdParam('Order id') });
 export const userIdSchema = z.object({ id: positiveIdParam('User id') });
@@ -63,11 +86,12 @@ function validationError(res: Response, message: string, error: z.ZodError) {
 
 // Defensive check in case the router is mounted without the auth middleware.
 function authenticatedCustomer(res: Response): number | undefined {
-  const customerId = res.locals.customerId;
-  if (customerId === undefined) {
+  const principal = res.locals.principal;
+  if (principal?.type !== 'customer') {
     res.status(401).json({ error: 'Authentication required' });
+    return undefined;
   }
-  return customerId;
+  return principal.id;
 }
 
 function forbidden(res: Response): void {
@@ -91,9 +115,17 @@ export class OrderController {
       return;
     }
 
+    const { address, postcode, discountCode, orderServices } = result.data;
+    const deliveryAddress =
+      address !== undefined && postcode !== undefined
+        ? { address, postcode }
+        : undefined;
+
     const order = await this.service.createOrder(
       customerId,
-      result.data.orderServices,
+      orderServices,
+      deliveryAddress,
+      discountCode,
     );
     res.status(201).location(`/orders/${order.orderID}`).json({ order });
   };
@@ -161,6 +193,10 @@ export class OrderController {
           res
             .status(409)
             .json({ error: error.message, productID: error.productID });
+          return;
+        }
+        if (error instanceof InvalidDiscountCodeError) {
+          res.status(400).json({ error: error.message });
           return;
         }
         console.error('Unexpected order error', error);

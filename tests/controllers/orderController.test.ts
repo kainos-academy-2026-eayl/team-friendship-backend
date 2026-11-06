@@ -4,8 +4,10 @@ import express from 'express';
 import { describe, expect, onTestFinished, test, vi } from 'vitest';
 import { OrderController } from '../../src/controllers/orderController';
 import type { OrderWithServices } from '../../src/repositories/orderRepository';
+import type { AuthPrincipal } from '../../src/services/accessTokenService';
 import {
   InsufficientStockError,
+  InvalidDiscountCodeError,
   OrderNotFoundError,
   OrderProductNotFoundError,
 } from '../../src/services/orderService';
@@ -17,6 +19,11 @@ const ORDER: OrderWithServices = {
   customerID: CUSTOMER_ID,
   dateCreated: new Date('2026-11-04T12:00:00Z'),
   status: 'pending',
+  address: '123 Town Street',
+  postcode: 'BT16 AAA',
+  discountCode: null,
+  discountAmount: 0,
+  discountCodeID: null,
   orderServices: [],
 };
 
@@ -30,13 +37,13 @@ function createService() {
 
 async function startServer(
   service = createService(),
-  customerId: number | null = CUSTOMER_ID,
+  principal: AuthPrincipal | null = { type: 'customer', id: CUSTOMER_ID },
 ) {
   const app = express();
   app.use(express.json());
   app.use((_req, res, next) => {
-    if (customerId !== null) {
-      res.locals.customerId = customerId;
+    if (principal !== null) {
+      res.locals.principal = principal;
     }
     next();
   });
@@ -92,6 +99,65 @@ describe('POST /orders', () => {
     expect(service.createOrder).toHaveBeenCalledWith(
       CUSTOMER_ID,
       VALID_BODY.orderServices,
+      undefined,
+      undefined,
+    );
+  });
+
+  test('passes an alternative delivery address to the service', async () => {
+    const { baseUrl, service } = await startServer();
+
+    const response = await postOrder(baseUrl, {
+      ...VALID_BODY,
+      address: '  14 Gift Lane ',
+      postcode: 'BT9 5AB',
+    });
+
+    expect(response.status).toBe(201);
+    expect(service.createOrder).toHaveBeenCalledWith(
+      CUSTOMER_ID,
+      VALID_BODY.orderServices,
+      { address: '14 Gift Lane', postcode: 'BT9 5AB' },
+      undefined,
+    );
+  });
+
+  test('passes a valid discount code to the service, ignoring case and spaces', async () => {
+    const { baseUrl, service } = await startServer();
+
+    const response = await postOrder(baseUrl, {
+      ...VALID_BODY,
+      discountCode: ' friendship12 ',
+    });
+
+    expect(response.status).toBe(201);
+    expect(service.createOrder).toHaveBeenCalledWith(
+      CUSTOMER_ID,
+      VALID_BODY.orderServices,
+      undefined,
+      'friendship12',
+    );
+  });
+
+  test('returns 400 when the service rejects the discount code', async () => {
+    const service = createService();
+    service.createOrder.mockRejectedValueOnce(new InvalidDiscountCodeError());
+    const { baseUrl } = await startServer(service);
+
+    const response = await postOrder(baseUrl, {
+      ...VALID_BODY,
+      discountCode: 'FREESTUFF',
+    });
+
+    expect(response.status).toBe(400);
+    expect(await readBody(response)).toEqual({
+      error: 'Invalid discount code',
+    });
+    expect(service.createOrder).toHaveBeenCalledWith(
+      CUSTOMER_ID,
+      VALID_BODY.orderServices,
+      undefined,
+      'FREESTUFF',
     );
   });
 
@@ -123,6 +189,13 @@ describe('POST /orders', () => {
       },
     ],
     ['missing customer id', { orderServices: [{ productID: 1, quantity: 1 }] }],
+    ['address without postcode', { ...VALID_BODY, address: '14 Gift Lane' }],
+    ['postcode without address', { ...VALID_BODY, postcode: 'BT9 5AB' }],
+    ['blank address', { ...VALID_BODY, address: '   ', postcode: 'BT9 5AB' }],
+    [
+      'null postcode',
+      { ...VALID_BODY, address: '14 Gift Lane', postcode: null },
+    ],
   ])('returns 400 for %s', async (_name, body) => {
     const { baseUrl, service } = await startServer();
 
@@ -187,6 +260,18 @@ describe('POST /orders', () => {
     const response = await postOrder(baseUrl, VALID_BODY);
 
     expect(response.status).toBe(401);
+  });
+
+  test('returns 401 for staff accounts', async () => {
+    const { baseUrl, service } = await startServer(createService(), {
+      type: 'staff',
+      id: CUSTOMER_ID,
+    });
+
+    const response = await postOrder(baseUrl, VALID_BODY);
+
+    expect(response.status).toBe(401);
+    expect(service.createOrder).not.toHaveBeenCalled();
   });
 });
 

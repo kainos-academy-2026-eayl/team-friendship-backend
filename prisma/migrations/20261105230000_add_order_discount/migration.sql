@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Order" ADD COLUMN "discountCode" TEXT,
+ADD COLUMN "discountAmount" DOUBLE PRECISION NOT NULL DEFAULT 0;

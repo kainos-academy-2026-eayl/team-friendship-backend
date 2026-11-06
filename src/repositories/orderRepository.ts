@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from '../generated/prisma/client';
-import type { OrderItem } from '../models/orderModel';
+import { calculateDiscount, type Discount } from '../models/discountModel';
+import type { DeliveryAddress, OrderItem } from '../models/orderModel';
 import {
   InsufficientStockError,
   OrderProductNotFoundError,
@@ -21,8 +22,21 @@ export const INITIAL_ORDER_STATUS = 'pending';
 export class OrderRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  create(customerID: number, items: OrderItem[]): Promise<OrderWithServices> {
+  create(
+    customerID: number,
+    items: OrderItem[],
+    deliveryAddress?: DeliveryAddress,
+    discount?: Discount,
+  ): Promise<OrderWithServices> {
     return this.prisma.$transaction(async (tx) => {
+      // Fall back to the customer's saved address when no alternative is supplied.
+      const { address, postcode } =
+        deliveryAddress ??
+        (await tx.customer.findUniqueOrThrow({
+          where: { customerID },
+          select: { address: true, postcode: true },
+        }));
+
       // Iterate over a copy sorted by productID so every order
       // acquires product locks in the same order.
       for (const { productID, quantity } of [...items].sort(
@@ -44,10 +58,31 @@ export class OrderRepository {
         }
       }
 
+      let discountAmount = 0;
+      if (discount) {
+        // Prices are read inside the transaction so the discount matches the stock just reserved.
+        const products = await tx.product.findMany({
+          where: { productID: { in: items.map((item) => item.productID) } },
+          select: { productID: true, productPrice: true },
+        });
+        const subtotal = items.reduce((sum, item) => {
+          const price =
+            products.find((product) => product.productID === item.productID)
+              ?.productPrice ?? 0;
+          return sum + price * item.quantity;
+        }, 0);
+        discountAmount = calculateDiscount(subtotal, discount.percentOff);
+      }
+
       return tx.order.create({
         data: {
           customerID,
           status: INITIAL_ORDER_STATUS,
+          address,
+          postcode,
+          discountCode: discount?.code ?? null,
+          discountAmount,
+          discountCodeID: discount?.id ?? null,
           orderServices: { create: items },
         },
         include: orderWithServices,

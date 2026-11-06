@@ -1,3 +1,4 @@
+TRUNCATE TABLE "Basket" RESTART IDENTITY CASCADE;
 TRUNCATE TABLE "OrderService" RESTART IDENTITY CASCADE;
 TRUNCATE TABLE "Order" RESTART IDENTITY CASCADE;
 TRUNCATE TABLE "Customer" RESTART IDENTITY CASCADE;
@@ -52,23 +53,25 @@ INSERT INTO "Order"(
     "orderID",
     "customerID",
     "dateCreated",
-    "status"
+    "status",
+    "address",
+    "postcode"
 )
 VALUES
-    (1, 1, DEFAULT,'completed'),
-    (2, 6, DEFAULT,'completed'),
-    (3, 6, DEFAULT,'completed'),
-    (4, 4, DEFAULT,'completed'),
-    (5, 5, DEFAULT,'completed'),
-    (6, 2, '2026-10-10 09:45:33', 'completed'),
-    (7, 6, '2026-10-14 18:12:47', 'paid'),
-    (8, 1, '2026-10-19 11:30:05', 'completed'),
-    (9, 6, '2026-10-22 16:58:22', 'paid'),
-    (10, 6, '2026-10-25 13:17:49', 'completed'),
-    (11, 3, '2026-10-28 10:05:31', 'paid'),
-    (12, 1, '2026-11-01 15:41:08', 'completed'),
-    (13, 4, '2026-11-03 08:29:54', 'paid'),
-    (14, 2, '2026-11-04 19:14:27', 'completed');
+    (1, 1, DEFAULT, 'completed', '123 Town Street', 'BT16 AAA'),
+    (2, 6, DEFAULT, 'completed', '99 Peanuts Street', 'BT16 DDD'),
+    (3, 6, DEFAULT, 'completed', '14 Gift Lane', 'BT9 5AB'),
+    (4, 4, DEFAULT, 'completed', '789 Left Street', 'BT16 CCC'),
+    (5, 5, DEFAULT, 'completed', '88 Burger Town', 'BT12 ABC'),
+    (6, 2, '2026-10-10 09:45:33', 'completed', '321 Up Street', 'BT16 AAA'),
+    (7, 6, '2026-10-14 18:12:47', 'paid', '99 Peanuts Street', 'BT16 DDD'),
+    (8, 1, '2026-10-19 11:30:05', 'completed', '7 Office Park', 'BT3 9DT'),
+    (9, 6, '2026-10-22 16:58:22', 'paid', '99 Peanuts Street', 'BT16 DDD'),
+    (10, 6, '2026-10-25 13:17:49', 'completed', '14 Gift Lane', 'BT9 5AB'),
+    (11, 3, '2026-10-28 10:05:31', 'paid', '456 Down Street', 'BT16 BBB'),
+    (12, 1, '2026-11-01 15:41:08', 'completed', '123 Town Street', 'BT16 AAA'),
+    (13, 4, '2026-11-03 08:29:54', 'paid', '789 Left Street', 'BT16 CCC'),
+    (14, 2, '2026-11-04 19:14:27', 'completed', '321 Up Street', 'BT16 AAA');
 
 -- Explicit IDs bypass the sequence, so move it on to avoid clashes with orders created by the API.
 SELECT setval(pg_get_serial_sequence('"Order"', 'orderID'), (SELECT MAX("orderID") FROM "Order"));
@@ -82,15 +85,13 @@ INSERT INTO "OrderService" (
 VALUES
     (1, 1, 2),
     (1, 2, 1),
-    (2, 4, 1),
-    (3, 3, 3);
-SELECT order_line."orderID", order_line."productID", order_line.quantity
-FROM (VALUES
-    (1, 1, 2),
-    (1, 2, 1),
     (1, 3, 1),
     (1, 4, 1),
     (2, 1, 1),
+    (2, 4, 1),
+    (3, 3, 3),
+    (4, 9, 1),
+    (5, 16, 1),
     (6, 5, 1),
     (6, 6, 1),
     (7, 4, 1),
@@ -116,5 +117,21 @@ FROM (VALUES
     (13, 12, 1),
     (14, 7, 1),
     (14, 14, 2),
-    (14, 4, 1)
-) AS order_line("orderID", "productID", quantity);
+    (14, 4, 1);
+
+-- Basket contents for testing checkout. Bob Johnson (4) is left empty to show the empty-basket state.
+INSERT INTO "Basket" (
+    "customerID",
+    "productID",
+    "quantity"
+)
+VALUES
+    (1, 4, 2),
+    (1, 12, 1),
+    (1, 3, 3),
+    (2, 13, 1),
+    (2, 9, 2),
+    (3, 2, 1),
+    (5, 11, 1),
+    (6, 6, 1),
+    (6, 14, 2);
