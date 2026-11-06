@@ -84,17 +84,20 @@ model Product {
 }
 
 model Order {
-  orderID       Int            @id @default(autoincrement())
-  customerID    Int
-  dateCreated   DateTime       @default(now())
-  status        String
-  address       String
-  postcode      String
+  orderID             Int            @id @default(autoincrement())
+  customerID          Int
+  dateCreated         DateTime       @default(now())
+  status              String
+  address             String
+  postcode            String
   // Snapshot of the code used and the amount taken off, so later price changes don't alter past orders.
-  discountCode   String?
-  discountAmount Float          @default(0)
-  customer      Customer       @relation(fields: [customerID], references: [customerID])
-  orderServices OrderService[]
+  discountCode        String?
+  discountAmount      Float          @default(0)
+  // Link to the code record; cleared if the code is deleted, while the snapshot above is kept.
+  discountCodeID      Int?
+  appliedDiscountCode DiscountCode?  @relation(fields: [discountCodeID], references: [id], onDelete: SetNull)
+  customer            Customer       @relation(fields: [customerID], references: [customerID])
+  orderServices       OrderService[]
 }
 
 model OrderService {
@@ -119,4 +122,22 @@ model Basket {
 
   @@index([customerID])
   @@index([productID])
+}
+
+enum DiscountStatus {
+  ACTIVE
+  EXPIRED
+  DISABLED
+}
+
+model DiscountCode {
+  id         Int            @id @default(autoincrement())
+  // Stored in upper case; customers can enter codes in any case.
+  code       String         @unique
+  // Whole-number percentage off the order subtotal, e.g. 12 = 12% off.
+  discount   Int
+  status     DiscountStatus @default(ACTIVE)
+  // Optional: codes without an expiry date never expire.
+  expiryDate DateTime?
+  orders     Order[]
 }

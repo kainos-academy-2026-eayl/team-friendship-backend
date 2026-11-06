@@ -1,9 +1,12 @@
 import { describe, expect, test, vi } from 'vitest';
 import type { OrderWithServices } from '../../src/repositories/orderRepository';
 import {
+  InvalidDiscountCodeError,
   OrderNotFoundError,
   OrderService,
 } from '../../src/services/orderService';
+
+const FRIENDSHIP12 = { id: 1, code: 'FRIENDSHIP12', percentOff: 12 };
 
 function order(customerID: number): OrderWithServices {
   return {
@@ -15,6 +18,7 @@ function order(customerID: number): OrderWithServices {
     postcode: 'BT16 AAA',
     discountCode: null,
     discountAmount: 0,
+    discountCodeID: null,
     orderServices: [],
   };
 }
@@ -25,7 +29,16 @@ function createService(found: OrderWithServices | null = order(1)) {
     findById: vi.fn(async () => found),
     findByCustomerId: vi.fn(async () => [order(1)]),
   };
-  return { service: new OrderService(repository), repository };
+  const discounts = {
+    findUsableByCode: vi.fn(async (code: string) =>
+      code.trim().toUpperCase() === 'FRIENDSHIP12' ? FRIENDSHIP12 : null,
+    ),
+  };
+  return {
+    service: new OrderService(repository, discounts),
+    repository,
+    discounts,
+  };
 }
 
 describe('OrderService', () => {
@@ -56,18 +69,39 @@ describe('OrderService', () => {
     );
   });
 
-  test('createOrder passes the discount to the repository', async () => {
-    const { service, repository } = createService();
+  test('createOrder looks up the discount code and passes it to the repository', async () => {
+    const { service, repository, discounts } = createService();
     const items = [{ productID: 3, quantity: 2 }];
-    const discount = { code: 'FRIENDSHIP12', percentOff: 12 };
 
-    await service.createOrder(1, items, undefined, discount);
+    await service.createOrder(1, items, undefined, 'friendship12');
+    expect(discounts.findUsableByCode).toHaveBeenCalledWith('friendship12');
     expect(repository.create).toHaveBeenCalledWith(
       1,
       items,
       undefined,
-      discount,
+      FRIENDSHIP12,
     );
+  });
+
+  test('createOrder rejects an unusable discount code without creating an order', async () => {
+    const { service, repository } = createService();
+
+    await expect(
+      service.createOrder(
+        1,
+        [{ productID: 3, quantity: 2 }],
+        undefined,
+        'NOPE',
+      ),
+    ).rejects.toBeInstanceOf(InvalidDiscountCodeError);
+    expect(repository.create).not.toHaveBeenCalled();
+  });
+
+  test('createOrder skips the lookup when no code is given', async () => {
+    const { service, discounts } = createService();
+
+    await service.createOrder(1, [{ productID: 3, quantity: 2 }]);
+    expect(discounts.findUsableByCode).not.toHaveBeenCalled();
   });
 
   test('getOrderForCustomer returns an order owned by the customer', async () => {

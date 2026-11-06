@@ -82,6 +82,7 @@ export class OrderRepository {
           postcode,
           discountCode: discount?.code ?? null,
           discountAmount,
+          discountCodeID: discount?.id ?? null,
           orderServices: { create: items },
         },
         include: orderWithServices,

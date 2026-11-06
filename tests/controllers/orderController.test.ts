@@ -7,6 +7,7 @@ import type { OrderWithServices } from '../../src/repositories/orderRepository';
 import type { AuthPrincipal } from '../../src/services/accessTokenService';
 import {
   InsufficientStockError,
+  InvalidDiscountCodeError,
   OrderNotFoundError,
   OrderProductNotFoundError,
 } from '../../src/services/orderService';
@@ -22,6 +23,7 @@ const ORDER: OrderWithServices = {
   postcode: 'BT16 AAA',
   discountCode: null,
   discountAmount: 0,
+  discountCodeID: null,
   orderServices: [],
 };
 
@@ -133,12 +135,14 @@ describe('POST /orders', () => {
       CUSTOMER_ID,
       VALID_BODY.orderServices,
       undefined,
-      { code: 'FRIENDSHIP12', percentOff: 12 },
+      'friendship12',
     );
   });
 
-  test('rejects an unknown discount code without creating an order', async () => {
-    const { baseUrl, service } = await startServer();
+  test('returns 400 when the service rejects the discount code', async () => {
+    const service = createService();
+    service.createOrder.mockRejectedValueOnce(new InvalidDiscountCodeError());
+    const { baseUrl } = await startServer(service);
 
     const response = await postOrder(baseUrl, {
       ...VALID_BODY,
@@ -149,7 +153,12 @@ describe('POST /orders', () => {
     expect(await readBody(response)).toEqual({
       error: 'Invalid discount code',
     });
-    expect(service.createOrder).not.toHaveBeenCalled();
+    expect(service.createOrder).toHaveBeenCalledWith(
+      CUSTOMER_ID,
+      VALID_BODY.orderServices,
+      undefined,
+      'FREESTUFF',
+    );
   });
 
   test.each([

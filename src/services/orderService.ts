@@ -1,5 +1,6 @@
 import type { Discount } from '../models/discountModel';
 import type { DeliveryAddress, OrderItem } from '../models/orderModel';
+import type { DiscountCodeRepository } from '../repositories/discountCodeRepository';
 import type {
   OrderRepository,
   OrderWithServices,
@@ -30,16 +31,35 @@ type OrderRepositoryContract = Pick<
   OrderRepository,
   'create' | 'findById' | 'findByCustomerId'
 >;
+type DiscountLookup = Pick<DiscountCodeRepository, 'findUsableByCode'>;
+
+export class InvalidDiscountCodeError extends Error {
+  constructor() {
+    super('Invalid discount code');
+    this.name = 'InvalidDiscountCodeError';
+  }
+}
 
 export class OrderService {
-  constructor(private readonly repository: OrderRepositoryContract) {}
+  constructor(
+    private readonly repository: OrderRepositoryContract,
+    private readonly discounts: DiscountLookup,
+  ) {}
 
-  createOrder(
+  async createOrder(
     customerID: number,
     items: OrderItem[],
     deliveryAddress?: DeliveryAddress,
-    discount?: Discount,
+    discountCode?: string,
   ): Promise<OrderWithServices> {
+    let discount: Discount | undefined;
+    if (discountCode !== undefined) {
+      discount =
+        (await this.discounts.findUsableByCode(discountCode)) ?? undefined;
+      if (!discount) {
+        throw new InvalidDiscountCodeError();
+      }
+    }
     return this.repository.create(customerID, items, deliveryAddress, discount);
   }
 

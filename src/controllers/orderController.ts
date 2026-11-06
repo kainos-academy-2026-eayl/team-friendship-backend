@@ -5,9 +5,9 @@ import {
   Router,
 } from 'express';
 import { z } from 'zod';
-import { findDiscount } from '../models/discountModel';
 import {
   InsufficientStockError,
+  InvalidDiscountCodeError,
   OrderNotFoundError,
   OrderProductNotFoundError,
   type OrderService,
@@ -121,18 +121,11 @@ export class OrderController {
         ? { address, postcode }
         : undefined;
 
-    const discount =
-      discountCode === undefined ? undefined : findDiscount(discountCode);
-    if (discountCode !== undefined && !discount) {
-      res.status(400).json({ error: 'Invalid discount code' });
-      return;
-    }
-
     const order = await this.service.createOrder(
       customerId,
       orderServices,
       deliveryAddress,
-      discount,
+      discountCode,
     );
     res.status(201).location(`/orders/${order.orderID}`).json({ order });
   };
@@ -200,6 +193,10 @@ export class OrderController {
           res
             .status(409)
             .json({ error: error.message, productID: error.productID });
+          return;
+        }
+        if (error instanceof InvalidDiscountCodeError) {
+          res.status(400).json({ error: error.message });
           return;
         }
         console.error('Unexpected order error', error);
