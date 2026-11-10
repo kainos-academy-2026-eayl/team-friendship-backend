@@ -34,7 +34,7 @@ if (!process.env.PORT) {
   throw new Error('PORT environment variable is not set');
 }
 
-const HOST = process.env.HOST ?? 'localhost';
+const HOST = process.env.HOST ?? '0.0.0.0';
 const PORT = Number(process.env.PORT);
 
 if (!Number.isInteger(PORT) || PORT < 0 || PORT > 65535) {

@@ -45,6 +45,37 @@ curl http://localhost:3000/health
 
 Use `npm ci` rather than `npm install`. It installs the exact versions recorded in `package-lock.json`, so everyone on the team runs identical dependencies. Use `npm install` only when you are deliberately adding or upgrading a package.
 
+## Running with Docker
+
+The server defaults to `HOST=0.0.0.0` so Docker can forward requests to it.
+Setting `HOST=localhost`, `127.0.0.1`, or `::1` restricts the server to the
+container's loopback interface and prevents access through a published port.
+Use a loopback host only when intentionally restricting a non-container run.
+
+The Dockerfile installs locked dependencies and builds the application inside
+the image. Local dependencies, generated Prisma code, build output, and `.env`
+files are excluded from the build context. Pass runtime configuration explicitly:
+
+```sh
+docker build -t friendship-backend:local .
+docker run --rm --name friendship-backend -p 3000:3000 \
+  --env-file .env -e HOST=0.0.0.0 -e PORT=3000 friendship-backend:local
+```
+
+Stop any existing container publishing port 3000 before running this command.
+The environment must include `DATABASE_URL` and `JWT_ACCESS_SECRET` (at least
+32 bytes). For Postgres running on the Docker Desktop host, use
+`host.docker.internal` instead of `localhost` in the database URL. For a database
+container on a shared Docker network, use its service name (for example `db`)
+and internal port 5432. The existing Compose file starts only the database;
+it does not start or network the backend container.
+
+Check connectivity with `curl http://localhost:3000/health`. A successful
+response contains `{"status":"ok","uptime":...}`; this checks HTTP availability,
+not database connectivity. There is no `GET /` route. In the complete application,
+an unauthenticated request to `/` reaches the authentication middleware and
+returns HTTP 401, not a connection reset.
+
 ## Admin portal API
 
 The backend exposes the protected endpoints used by the frontend admin portal:
