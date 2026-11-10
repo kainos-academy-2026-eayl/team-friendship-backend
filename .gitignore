@@ -4,3 +4,4 @@ dist/
 code_reviews/
 
 /src/generated/prisma
+certs/*
