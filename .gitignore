@@ -5,9 +5,10 @@ code_reviews/
 
 /src/generated/prisma
 certs/*
-my-infrastructure/dev.tfvars
+my-infrastructure/modules/root/dev.tfvars
 
-my-infrastructure/terraform.tfstate
-my-infrastructure/.terraform.tfstate.lock.info
-my-infrastructure/.terraform.lock.hcl
-my-infrastructure/.terraform/*
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+
