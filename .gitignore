@@ -11,3 +11,4 @@ my-infrastructure/terraform.tfstate
 my-infrastructure/.terraform.tfstate.lock.info
 my-infrastructure/.terraform.lock.hcl
 my-infrastructure/.terraform/*
+*.0_x5

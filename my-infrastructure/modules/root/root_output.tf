@@ -6,5 +6,5 @@ output "rg_public_name" {
 
 output "rg_public_id" {
   description = "ID of resource group"
-  value       = hi
+  value       = "hi"
 }
