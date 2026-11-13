@@ -5,7 +5,7 @@ code_reviews/
 
 /src/generated/prisma
 certs/*
-my-infrastructure/dev.tfvars
+my-infrastructure/modules/root/dev.tfvars
 
 # Terraform
 **/.terraform/*
