@@ -13,7 +13,7 @@ provider "azurerm" {
 
 # create resource group for the project
 resource "azurerm_resource_group" "rg" { # "resource-type", "resource-name"
-  name     = "var.resource_group_name"
+  name     = var.resource_group_name
   location = "UK South"
 }
 
