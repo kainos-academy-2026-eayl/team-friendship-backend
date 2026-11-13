@@ -5,3 +5,4 @@ code_reviews/
 
 /src/generated/prisma
 certs/*
+my-infrastructure/dev.tfvars
