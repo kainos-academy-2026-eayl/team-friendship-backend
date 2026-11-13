@@ -13,5 +13,4 @@ variable "environment" {
 variable "resource_group_id" {
   description = "ID of the resource group." # shown in prompts and docs
   type        = string                      # plain text value
-  default     = "blehhh"
 }
