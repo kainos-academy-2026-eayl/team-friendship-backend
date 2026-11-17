@@ -11,4 +11,5 @@ my-infrastructure/modules/root/dev.tfvars
 **/.terraform/*
 *.tfstate
 *.tfstate.*
-
+terraform.tfstate
+terraform.tfstate.backup
