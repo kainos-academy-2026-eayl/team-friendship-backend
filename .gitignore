@@ -11,3 +11,17 @@ my-infrastructure/terraform.tfstate
 my-infrastructure/.terraform.tfstate.lock.info
 my-infrastructure/.terraform.lock.hcl
 my-infrastructure/.terraform/*
+dev.tfvars
+terraform.lock.hcl
+.terraform/*
+.gitignore
+my-infrastructure/modules/root/.terraform/modules/modules.json
+my-infrastructure/modules/root/.terraform/terraform.tfstate
+.gitignore
+my-infrastructure/modules/root/.terraform/providers/registry.terraform.io/hashicorp/azurerm/4.81.0/darwin_arm64/terraform-provider-azurerm_v4.81.0_x5
+my-infrastructure/modules/root/.terraform/providers/registry.terraform.io/hashicorp/azurerm/4.81.0/darwin_arm64/LICENSE.txt
+my-infrastructure/modules/root/.terraform.lock.hcl
+my-infrastructure/modules/bootstrap/.terraform.lock.hcl
+my-infrastructure/modules/bootstrap/.terraform/providers/registry.terraform.io/hashicorp/azurerm/4.81.0/darwin_arm64/terraform-provider-azurerm_v4.81.0_x5
+my-infrastructure/modules/bootstrap/.terraform/providers/registry.terraform.io/hashicorp/azurerm/4.81.0/darwin_arm64/LICENSE.txt
+my-infrastructure/modules/bootstrap/terraform.tfstate
