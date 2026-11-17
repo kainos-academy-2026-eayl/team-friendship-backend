@@ -5,6 +5,13 @@ terraform {
       version = "~> 4.0"            # any 4.x release
     }
   }
+  backend "azurerm" {
+    resource_group_name  = "team-friendship-rg"
+    storage_account_name = "teamfriendshiptfstate"
+    container_name       = "tfstate"
+    key                  = "root.terraform.tfstate"
+    use_azuread_auth     = true
+  }
 }
 
 provider "azurerm" {
@@ -14,6 +21,6 @@ provider "azurerm" {
 module "resource-group" {
   source = "../resource-group"
 
-  resource_group_name = "team-friendship-rg-13-11-2026"
+  resource_group_name = "team-friendship-rg"
   environment         = "dev"
 }

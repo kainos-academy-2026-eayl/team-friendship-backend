@@ -1,10 +1,1 @@
-{
-  "Modules": [
-    { "Key": "", "Source": "", "Dir": "." },
-    {
-      "Key": "resource-group",
-      "Source": "../resource-group",
-      "Dir": "../resource-group"
-    }
-  ]
-}
+{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"resource-group","Source":"../resource-group","Dir":"../resource-group"}]}
