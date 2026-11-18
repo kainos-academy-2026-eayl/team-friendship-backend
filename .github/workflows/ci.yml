@@ -46,7 +46,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.ACR_LOGIN_SERVER }}/team-friendship-backend
+          images: ${{ secrets.ACR_LOGIN_SERVER != '' && format('{0}/team-friendship-backend', secrets.ACR_LOGIN_SERVER) || 'team-friendship-backend' }} # Default to local image name if the reigstry name is empty
           tags: |
             type=sha,format=short
             type=sha,format=long
