@@ -66,3 +66,17 @@ jobs:
 
       - name: Check the image exists
         run: docker image ls team-friendship-backend
+
+  azure:
+    needs: docker
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure login
+        run: az login --service-principal \
+          --username $CLIENT_ID \
+          --password $CLIENT_SECRET \
+          --tenant $TENANT_ID
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+          TENANT_ID: ${{ secrets.TENANT_ID }}
