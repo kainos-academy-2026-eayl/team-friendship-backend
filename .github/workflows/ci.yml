@@ -33,9 +33,9 @@ jobs:
         run: npm test
 
   docker:
-    # name doesnt affect behaviour
     name: Build docker image
     needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only build docker image on push to main branch
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -64,17 +64,8 @@ jobs:
         with:
           context: .
           file: ./dockerfile
-          load: true
+          push: true # Push the built image to the registry
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Check the image exists
-        run: docker image ls team-friendship-backend
-
-      - name: Push the image to Azure Container Registry
-        run: az acr repository push -n ${{ secrets.ACR_NAME }} --image ${{ secrets.ACR_LOGIN_SERVER }}/team-friendship-backend:${{ steps.meta.outputs.tags }}
-
-      - name: Verify the image in Azure Container Registry
-        run: az acr repository show -n ${{ secrets.ACR_NAME }} --image ${{ secrets.ACR_LOGIN_SERVER }}/team-friendship-backend:${{ steps.meta.outputs.tags }}
