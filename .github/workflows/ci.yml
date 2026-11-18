@@ -43,11 +43,17 @@ jobs:
 
       - uses: docker/setup-buildx-action@v3
 
+      - name: Log in to Azure
+        run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.TENANT_ID }} --subscription ${{ secrets.SUBSCRIPTION_ID }}
+
+      - name: Log in to Azure Container Registry
+        run: az acr login -n ${{ secrets.ACR_NAME }}
+
       - name: Work out image tags
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: team-friendship-backend
+          images: ${{ secrets.ACR_LOGIN_SERVER }}/team-friendship-backend
           tags: |
             type=sha,format=short
             type=sha,format=long
@@ -66,3 +72,9 @@ jobs:
 
       - name: Check the image exists
         run: docker image ls team-friendship-backend
+
+      - name: Push the image to Azure Container Registry
+        run: az acr repository push -n ${{ secrets.ACR_NAME }} --image ${{ secrets.ACR_LOGIN_SERVER }}/team-friendship-backend:${{ steps.meta.outputs.tags }}
+
+      - name: Verify the image in Azure Container Registry
+        run: az acr repository show -n ${{ secrets.ACR_NAME }} --image ${{ secrets.ACR_LOGIN_SERVER }}/team-friendship-backend:${{ steps.meta.outputs.tags }}
