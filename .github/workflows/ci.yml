@@ -35,19 +35,12 @@ jobs:
   docker:
     name: Build docker image
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only build docker image on push to main branch
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
       - uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Azure
-        run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.TENANT_ID }} --subscription ${{ secrets.SUBSCRIPTION_ID }}
-
-      - name: Log in to Azure Container Registry
-        run: az acr login -n ${{ secrets.ACR_NAME }}
 
       - name: Work out image tags
         id: meta
@@ -59,17 +52,34 @@ jobs:
             type=sha,format=long
             type=ref,event=branch
 
-      - name: Build image and push to the ACR
-        id: build-and-push # ID for referencing the build and push step outputs
+      - name: Build image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./dockerfile
-          push: true # Push the built image to the registry
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  azure:
+    name: Push the docker image to Azure Container Registry
+    needs: docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only push the image during a push to main
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.TENANT_ID }} --subscription ${{ secrets.SUBSCRIPTION_ID }}
+
+      - name: Log in to Azure Container Registry
+        run: az acr login -n ${{ secrets.ACR_NAME }}
+
+      - name: Push the image to Azure Container Registry
+        run: docker push ${{ secrets.ACR_LOGIN_SERVER }}/team-friendship-backend:sha-${{ github.sha }}
 
       - name: Verify the image in Azure Container Registry
         run: az acr repository show -n ${{ secrets.ACR_NAME }} --image team-friendship-backend:sha-${{ github.sha }} # Check the full SHA tag
