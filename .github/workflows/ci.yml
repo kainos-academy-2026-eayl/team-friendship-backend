@@ -60,6 +60,7 @@ jobs:
             type=ref,event=branch
 
       - name: Build image and push to the ACR
+        id: build-and-push # ID for referencing the build and push step outputs
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -69,3 +70,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Verify the image in Azure Container Registry
+        run: az acr repository show -n ${{ secrets.ACR_NAME }} --image team-friendship-backend:sha-${{ github.sha }} # Check the full SHA tag
