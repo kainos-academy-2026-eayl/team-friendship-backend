@@ -63,6 +63,20 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Save Docker image
+        env:
+          IMAGE: ${{ secrets.ACR_LOGIN_SERVER }}/team-friendship-backend:sha-${{ github.sha }}
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only save the image during a push to main
+        run: docker save --output "${{ runner.temp }}/image.tar" "$IMAGE"
+
+      - name: Upload Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only upload the image during a push to main
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}/image.tar
+          retention-days: 1
+
   azure:
     name: Push the docker image to Azure Container Registry
     needs: docker
@@ -71,6 +85,15 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only push the image during a push to main
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+          path: ${{ runner.temp }}
+
+      - name: Load Docker image
+        run: docker load --input "${{ runner.temp }}/image.tar"
 
       - name: Log in to Azure
         env:
