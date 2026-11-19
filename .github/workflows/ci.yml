@@ -81,7 +81,7 @@ jobs:
         run: >-
           az login --service-principal
           --username "$CLIENT_ID"
-          --certificate "$CLIENT_SECRET"
+          --password "$CLIENT_SECRET"
           --tenant "$TENANT_ID"
           --subscription "$SUBSCRIPTION_ID"
 
