@@ -33,7 +33,6 @@ jobs:
         run: npm test
 
   docker:
-    # name doesnt affect behaviour
     name: Build docker image
     needs: test
     runs-on: ubuntu-latest
@@ -47,7 +46,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: team-friendship-backend
+          images: ${{ secrets.ACR_LOGIN_SERVER != '' && format('{0}/team-friendship-backend', secrets.ACR_LOGIN_SERVER) || 'team-friendship-backend' }} # Default to local image name if the reigstry name is empty
           tags: |
             type=sha,format=short
             type=sha,format=long
@@ -64,5 +63,23 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Check the image exists
-        run: docker image ls team-friendship-backend
+  azure:
+    name: Push the docker image to Azure Container Registry
+    needs: docker
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only push the image during a push to main
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        run: az login --service-principal -u ${{ secrets.CLIENT_ID }} -p ${{ secrets.CLIENT_SECRET }} --tenant ${{ secrets.TENANT_ID }} --subscription ${{ secrets.SUBSCRIPTION_ID }}
+
+      - name: Log in to Azure Container Registry
+        run: az acr login -n ${{ secrets.ACR_NAME }}
+
+      - name: Push the image to Azure Container Registry
+        run: docker push ${{ secrets.ACR_LOGIN_SERVER }}/team-friendship-backend:sha-${{ github.sha }}
+
+      - name: Verify the image in Azure Container Registry
+        run: az acr repository show -n ${{ secrets.ACR_NAME }} --image team-friendship-backend:sha-${{ github.sha }} # Check the full SHA tag
