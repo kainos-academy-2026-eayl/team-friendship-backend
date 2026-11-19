@@ -93,3 +93,33 @@ jobs:
 
       - name: Verify the image in Azure Container Registry
         run: az acr repository show -n ${{ secrets.ACR_NAME }} --image team-friendship-backend:sha-${{ github.sha }} # Check the full SHA tag
+
+  terraform:
+    name: Deploy infrastructure with terraform
+    needs: azure
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: my-infrastructure/modules/root
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only deploy during a push to main
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Initialize Terraform
+        run: terraform init
+
+      - name: Format Terraform
+        run: terraform fmt
+
+      - name: Validate Terraform
+        run: terraform validate
+
+      - name: Plan Terraform
+        run: terraform plan
+
+      - name: Apply Terraform
+        run: terraform apply -auto-approve
