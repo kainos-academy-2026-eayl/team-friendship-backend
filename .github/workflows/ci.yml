@@ -137,3 +137,36 @@ jobs:
 
       - name: Apply Terraform
         run: terraform apply -auto-approve
+
+terraform-plan:
+  name: Plan terraform
+  runs-on: ubuntu-latest
+  timeout-minutes: 10
+  env:
+    CLIENT_ID: ${{ secrets.CLIENT_ID }}
+    CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+    TENANT_ID: ${{ secrets.TENANT_ID }}
+    SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
+  defaults:
+    run:
+      working-directory: my-infrastructure/modules/root
+  if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only deploy during a push to main
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Log in to Azure
+      run: >-
+        az login --service-principal
+        --username "$CLIENT_ID"
+        --password "$CLIENT_SECRET"
+        --tenant "$TENANT_ID"
+        --subscription "$SUBSCRIPTION_ID"
+
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v2
+
+    - name: Initialize Terraform
+      run: terraform init
+
+    - name: Plan Terraform
+      run: terraform plan -out=tfplan
