@@ -10,3 +10,8 @@ variable "environment" {
   default     = "dev"
 }
 
+variable "test_tag" {
+  description = "Temporary tag value for testing Terraform plans."
+  type        = string
+  default     = "terraform-plan-test"
+}
