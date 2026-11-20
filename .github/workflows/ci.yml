@@ -150,7 +150,6 @@ jobs:
     defaults:
       run:
         working-directory: my-infrastructure/modules/root
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' # Only deploy during a push to main
     steps:
       - uses: actions/checkout@v4
 
