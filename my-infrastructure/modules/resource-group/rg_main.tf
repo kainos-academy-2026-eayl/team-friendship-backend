@@ -15,9 +15,5 @@ provider "azurerm" {
 resource "azurerm_resource_group" "rg" { # "resource-type", "resource-name"
   name     = var.resource_group_name
   location = "UK South"
-
-  tags = {
-    test = var.test_tag
-  }
 }
 
