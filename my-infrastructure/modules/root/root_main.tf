@@ -27,15 +27,15 @@ module "resource-group" {
 data "azurerm_client_config" "current" {} # Retrieves information about the current Azure client (subscription, tenant, etc)
 
 resource "azurerm_key_vault" "app" {
-  name = "team-friendship-kv"
+  name                = "team-friendship-kv"
   resource_group_name = module.resource-group.resource_group_name
   location            = module.resource-group.location
-  tenant_id = data.azurerm_client_config.current.tenant_id
+  tenant_id           = data.azurerm_client_config.current.tenant_id
 
-  sku_name = "standard" # Standard stock keeping unit tier
-  rbac_authorization_enabled = true # Enforces rbac 
-  soft_delete_retention_days = 90 # Deleted secrets are held for 90 days
-  purge_protection_enabled = true # Prevents the kv from being purged during retention period
+  sku_name                   = "standard" # Standard stock keeping unit tier
+  rbac_authorization_enabled = true       # Enforces rbac
+  soft_delete_retention_days = 90         # Deleted secrets are held for 90 days
+  purge_protection_enabled   = true       # Prevents the kv from being purged during retention period
 }
 
 resource "azurerm_user_assigned_identity" "app" {
@@ -49,3 +49,23 @@ resource "azurerm_container_app_environment" "app" {
   resource_group_name = module.resource-group.resource_group_name
   location            = module.resource-group.location
 }
+
+resource "azurerm_container_registry" "app" {
+  name                = "teamfriendshipacr"
+  resource_group_name = module.resource-group.resource_group_name
+  location            = module.resource-group.location
+  sku                 = "Standard"
+  admin_enabled       = true
+}
+
+//resource "azurerm_role_assignment" "app_registry_pull" {
+//  scope                = azurerm_container_registry.app.id
+//  role_definition_name = "AcrPull"
+//  principal_id         = azurerm_user_assigned_identity.app.principal_id
+//}
+
+//resource "azurerm_role_assignment" "app_key_vault_secrets" {
+//  scope                = azurerm_key_vault.app.id
+//  role_definition_name = "Key Vault Secrets User"
+//  principal_id         = azurerm_user_assigned_identity.app.principal_id
+//}
