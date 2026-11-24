@@ -35,6 +35,11 @@ resource "azurerm_key_vault" "app" {
   sku_name = "standard" # Standard stock keeping unit tier
   rbac_authorization_enabled = true # Enforces rbac 
   soft_delete_retention_days = 90 # Deleted secrets are held for 90 days
-  purge_protection_enabled = true # Prevents the kv from being deleted
+  purge_protection_enabled = true # Prevents the kv from being purged during retention period
 }
 
+resource "azurerm_user_assigned_identity" "app" {
+  name                = "team-friendship-uami"
+  resource_group_name = module.resource-group.resource_group_name
+  location            = module.resource-group.location
+}
