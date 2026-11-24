@@ -43,3 +43,9 @@ resource "azurerm_user_assigned_identity" "app" {
   resource_group_name = module.resource-group.resource_group_name
   location            = module.resource-group.location
 }
+
+resource "azurerm_container_app_environment" "app" {
+  name                = "team-friendship-container-app-env"
+  resource_group_name = module.resource-group.resource_group_name
+  location            = module.resource-group.location
+}
