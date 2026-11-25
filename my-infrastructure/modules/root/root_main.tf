@@ -51,7 +51,7 @@ resource "azurerm_container_app_environment" "app" {
 }
 
 resource "azurerm_container_registry" "app" {
-  name                = "teamfriendshipacr"
+  name                = "acraiacademy26"
   resource_group_name = module.resource-group.resource_group_name
   location            = module.resource-group.location
   sku                 = "Standard"
