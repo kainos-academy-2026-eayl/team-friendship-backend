@@ -49,15 +49,3 @@ resource "azurerm_container_app_environment" "app" {
   resource_group_name = module.resource-group.resource_group_name
   location            = module.resource-group.location
 }
-
-//resource "azurerm_role_assignment" "app_registry_pull" {
-//  scope                = azurerm_container_registry.app.id
-//  role_definition_name = "AcrPull"
-//  principal_id         = azurerm_user_assigned_identity.app.principal_id
-//}
-
-//resource "azurerm_role_assignment" "app_key_vault_secrets" {
-//  scope                = azurerm_key_vault.app.id
-//  role_definition_name = "Key Vault Secrets User"
-//  principal_id         = azurerm_user_assigned_identity.app.principal_id
-//}
