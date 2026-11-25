@@ -50,14 +50,6 @@ resource "azurerm_container_app_environment" "app" {
   location            = module.resource-group.location
 }
 
-resource "azurerm_container_registry" "app" {
-  name                = "acraiacademy26"
-  resource_group_name = module.resource-group.resource_group_name
-  location            = module.resource-group.location
-  sku                 = "Standard"
-  admin_enabled       = false
-}
-
 //resource "azurerm_role_assignment" "app_registry_pull" {
 //  scope                = azurerm_container_registry.app.id
 //  role_definition_name = "AcrPull"
