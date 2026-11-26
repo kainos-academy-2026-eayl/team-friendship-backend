@@ -16,5 +16,5 @@ variable "acr_login_server" {
 variable "db_name" {
   description = "Name of the database inside the PostgreSQL flexible server."
   type        = string
-  default     = "team-friendship-db"
+  default     = "app_dev"
 }
