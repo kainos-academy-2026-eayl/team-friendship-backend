@@ -49,3 +49,67 @@ resource "azurerm_container_app_environment" "app" {
   resource_group_name = module.resource-group.resource_group_name
   location            = module.resource-group.location
 }
+
+# backend container app
+
+resource "azurerm_container_app" "backend" {
+  name                         = "team-friendship-backend-container-app"
+  resource_group_name          = module.resource-group.resource_group_name
+  container_app_environment_id = azurerm_container_app_environment.app.id
+  revision_mode                = "Single"
+
+  template {
+    container {
+      name   = "team-friendship-backend-container"
+      image  = var.backend-image
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      env {
+        name  = "PORT"
+        value = "3000"
+      }
+      env {
+        name  = "HOST"
+        value = "0.0.0.0"
+      }
+    }
+  }
+}
+
+# frontend container app
+
+resource "azurerm_container_app" "frontend" {
+  name                         = "team-friendship-frontend-container-app"
+  resource_group_name          = module.resource-group.resource_group_name
+  container_app_environment_id = azurerm_container_app_environment.app.id
+  revision_mode                = "Single"
+
+  template {
+    container {
+      name   = "team-friendship-frontend-container"
+      image  = var.frontend-image
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      env {
+        name  = "PORT"
+        value = "3000"
+      }
+      env {
+        name  = "HOST"
+        value = "0.0.0.0"
+      }
+    }
+  }
+}
+
+
+
+
+# Define the Key Vault references as secrets
+#secret {
+# name                = "session-secret-ref"
+#key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/SessionSecret"
+#identity            = azurerm_user_assigned_identity.app.id
+#}
