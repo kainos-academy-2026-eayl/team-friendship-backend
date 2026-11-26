@@ -1,11 +1,14 @@
-variable "backend-image" {
-  description = "Docker image for the backend container." # shown in prompts and docs
-  type        = string                                    # plain text value
-  default     = "${{secrets.ACR_LOGIN_SERVER}}/team-friendship-backend:sha-$${{github.sha}}"
+variable "backend_image" {
+  description = "Docker image for the backend container."
+  type        = string
 }
 
-variable "frontend-image" {
-  description = "Docker image for the frontend container." # shown in prompts and docs
-  type        = string                                     # plain text value
-  default     = "${{secrets.ACR_LOGIN_SERVER}}/team-friendship-frontend:sha-${{github.sha}}"
+variable "frontend_image" {
+  description = "Docker image for the frontend container."
+  type        = string
+}
+
+variable "acr_login_server" {
+  description = "Login server of the existing ACR."
+  type        = string
 }
