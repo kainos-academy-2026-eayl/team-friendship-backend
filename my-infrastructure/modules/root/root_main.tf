@@ -19,15 +19,14 @@ provider "azurerm" {
 
 module "resource-group" {
   source = "../resource-group"
-
-  resource_group_name = "team-friendship-rg"
-  environment         = "dev"
+  resource_group_name = var.resource_group_name
+  environment       = var.environment
 }
 
 data "azurerm_client_config" "current" {} # Retrieves information about the current Azure client (subscription, tenant, etc)
 
 resource "azurerm_key_vault" "app" {
-  name                = "team-friendship-kv"
+  name                = var.key_vault_name
   resource_group_name = module.resource-group.resource_group_name
   location            = module.resource-group.location
   tenant_id           = data.azurerm_client_config.current.tenant_id
@@ -39,13 +38,13 @@ resource "azurerm_key_vault" "app" {
 }
 
 resource "azurerm_user_assigned_identity" "app" {
-  name                = "team-friendship-uami"
+  name                = var.identity_name
   resource_group_name = module.resource-group.resource_group_name
   location            = module.resource-group.location
 }
 
 resource "azurerm_container_app_environment" "app" {
-  name                = "team-friendship-container-app-env"
+  name                = var.environment
   resource_group_name = module.resource-group.resource_group_name
   location            = module.resource-group.location
 }

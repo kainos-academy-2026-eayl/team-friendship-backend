@@ -17,3 +17,8 @@ resource "azurerm_resource_group" "rg" { # "resource-type", "resource-name"
   location = "UK South"
 }
 
+resource "azurerm_resource_group" "prodrg" { # "resource-type", "resource-name"
+  name     = var.resource_group_name
+  location = "UK South"
+}
+

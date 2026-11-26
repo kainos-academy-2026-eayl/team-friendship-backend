@@ -25,3 +25,7 @@ my-infrastructure/modules/bootstrap/.terraform.lock.hcl
 my-infrastructure/modules/bootstrap/.terraform/providers/registry.terraform.io/hashicorp/azurerm/4.81.0/darwin_arm64/terraform-provider-azurerm_v4.81.0_x5
 my-infrastructure/modules/bootstrap/.terraform/providers/registry.terraform.io/hashicorp/azurerm/4.81.0/darwin_arm64/LICENSE.txt
 my-infrastructure/modules/bootstrap/terraform.tfstate
+my-infrastructure/modules/root/prod.tfvars
+my-infrastructure/modules/root/dev.tfvars
+my-infrastructure/modules/resource-group/dev.tfvars
+my-infrastructure/modules/resource-group/prod.tfvars
