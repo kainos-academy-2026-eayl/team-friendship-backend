@@ -49,3 +49,119 @@ resource "azurerm_container_app_environment" "app" {
   resource_group_name = module.resource-group.resource_group_name
   location            = module.resource-group.location
 }
+
+# backend container app
+
+resource "azurerm_container_app" "backend" {
+  name                         = "team-friendship-backend-ca"
+  resource_group_name          = module.resource-group.resource_group_name
+  container_app_environment_id = azurerm_container_app_environment.app.id
+  revision_mode                = "Single"
+
+  ingress {
+    external_enabled = false
+    target_port      = 3000
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.app.id]
+  }
+
+  registry {
+    server   = var.acr_login_server
+    identity = azurerm_user_assigned_identity.app.id
+  }
+
+  template {
+    container {
+      name   = "team-friendship-backend-container"
+      image  = var.backend_image
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      env {
+        name  = "PORT"
+        value = 3000
+      }
+      env {
+        name  = "HOST"
+        value = "0.0.0.0"
+      }
+      env {
+        name        = "JWT_ACCESS_SECRET"
+        secret_name = "jwt-access-secret-ref"
+      }
+      env {
+        name        = "DATABASE_URL"
+        secret_name = "database-url-ref"
+      }
+    }
+  }
+
+  secret {
+    name                = "jwt-access-secret-ref"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/JWT-ACCESS-SECRET"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "database-url-ref"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/DATABASE-URL"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+}
+
+# frontend container app
+
+resource "azurerm_container_app" "frontend" {
+  name                         = "team-friendship-frontend-ca"
+  resource_group_name          = module.resource-group.resource_group_name
+  container_app_environment_id = azurerm_container_app_environment.app.id
+  revision_mode                = "Single"
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.app.id]
+  }
+
+  registry {
+    server   = var.acr_login_server
+    identity = azurerm_user_assigned_identity.app.id
+  }
+
+  ingress {
+    external_enabled = true
+    target_port      = 8000
+    traffic_weight {
+      latest_revision = true
+      percentage      = 100
+    }
+  }
+
+  template {
+    container {
+      name   = "team-friendship-frontend-container"
+      image  = var.frontend_image
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      env {
+        name  = "PORT"
+        value = 8000
+      }
+      env {
+        name  = "HOST"
+        value = "0.0.0.0"
+      }
+      env {
+        name  = "BACKEND_URL"
+        value = "https://${azurerm_container_app.backend.ingress[0].fqdn}"
+      }
+    }
+  }
+}
