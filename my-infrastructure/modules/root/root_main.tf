@@ -165,13 +165,3 @@ resource "azurerm_container_app" "frontend" {
     }
   }
 }
-
-
-
-
-# Define the Key Vault references as secrets
-#secret {
-# name                = "session-secret-ref"
-#key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/SessionSecret"
-#identity            = azurerm_user_assigned_identity.app.id
-#}
