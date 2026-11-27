@@ -198,7 +198,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions: # These permissions are needed to write the change log
-      contents: read
+      contents: write
       id-token: write
     env:
       CLIENT_ID: ${{ secrets.CLIENT_ID }}
@@ -234,13 +234,18 @@ jobs:
 
       - name: Plan Terraform
         run: terraform plan -out=tfplan
-      
+
       - name: Write log
         run: terraform show -no-color tfplan > terraform-plan-log.txt
 
       - name: Commit log # Adds a small commit to the branch containing the file, if there are changes
+      # Only commit the log if this is a push or a pull request to the same repository
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }} # Variable of the branch to push the commit to
         run: |
           git config user.name "github-actions[bot]"
+          git config user.email "terraform-log+github-actions[bot]@users.noreply.github.com"
           git add terraform-plan-log.txt
           if git diff --cached --quiet; then
             echo "No changes to commit"
