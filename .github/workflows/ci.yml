@@ -214,6 +214,8 @@ jobs:
         working-directory: my-infrastructure/modules/root
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Log in to Azure
         run: >-
@@ -239,17 +241,18 @@ jobs:
         run: terraform show -no-color tfplan > terraform-plan-log.txt
 
       - name: Commit log # Adds a small commit to the branch containing the file, if there are changes
-      # Only commit the log if this is a push or a pull request to the same repository
+        # Only commit the log if this is a push or a pull request to the same repository
         if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
         env:
           BRANCH: ${{ github.head_ref || github.ref_name }} # Variable of the branch to push the commit to
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "terraform-log+github-actions[bot]@users.noreply.github.com"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add terraform-plan-log.txt
           if git diff --cached --quiet; then
             echo "No changes to commit"
             exit 0
           fi
           git commit -m "Update terraform plan log"
+          git pull --rebase origin "${BRANCH}" # Rebase the local changes on top of the latest changes from the remote branch
           git push origin "HEAD:${BRANCH}"
