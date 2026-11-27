@@ -1,0 +1,82 @@
+[command]/home/runner/work/_temp/b3d0b28e-7295-498b-8c47-a0a0b30f7feb/terraform-bin show -no-color tfplan
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  ~ update in-place
+
+Terraform will perform the following actions:
+
+  # azurerm_container_app.backend will be updated in-place
+  ~ resource "azurerm_container_app" "backend" {
+        id                            = "/subscriptions/ca3b1116-a974-4549-88c2-8b56da5130d0/resourceGroups/team-friendship-rg/providers/Microsoft.App/containerApps/team-friendship-backend-ca"
+        name                          = "team-friendship-backend-ca"
+        tags                          = {}
+      - workload_profile_name         = "Consumption" -> null
+        # (9 unchanged attributes hidden)
+
+      ~ template {
+            # (6 unchanged attributes hidden)
+
+          ~ container {
+              ~ image             = "acraiacademy26.azurecr.io/team-friendship-backend:sha-166c1c4997daa738db0596aa419a261af511f5f6" -> "acraiacademy26.azurecr.io/team-friendship-backend:sha-5323a21e637c7e01b05561a0efc99094234293b2"
+              ~ memory            = "1Gi" -> "1.0Gi"
+                name              = "team-friendship-backend-container"
+                # (4 unchanged attributes hidden)
+
+                # (4 unchanged blocks hidden)
+            }
+          ~ container {
+              ~ memory            = "1Gi" -> "1.0Gi"
+                name              = "postgres"
+                # (5 unchanged attributes hidden)
+
+                # (3 unchanged blocks hidden)
+            }
+        }
+
+        # (7 unchanged blocks hidden)
+    }
+
+  # azurerm_container_app.frontend will be updated in-place
+  ~ resource "azurerm_container_app" "frontend" {
+        id                            = "/subscriptions/ca3b1116-a974-4549-88c2-8b56da5130d0/resourceGroups/team-friendship-rg/providers/Microsoft.App/containerApps/team-friendship-frontend-ca"
+        name                          = "team-friendship-frontend-ca"
+        tags                          = {}
+      - workload_profile_name         = "Consumption" -> null
+        # (9 unchanged attributes hidden)
+
+      ~ template {
+            # (6 unchanged attributes hidden)
+
+          ~ container {
+              ~ memory            = "1Gi" -> "1.0Gi"
+                name              = "team-friendship-frontend-container"
+                # (5 unchanged attributes hidden)
+
+                # (3 unchanged blocks hidden)
+            }
+        }
+
+        # (3 unchanged blocks hidden)
+    }
+
+  # azurerm_container_app_environment.app will be updated in-place
+  ~ resource "azurerm_container_app_environment" "app" {
+        id                                          = "/subscriptions/ca3b1116-a974-4549-88c2-8b56da5130d0/resourceGroups/team-friendship-rg/providers/Microsoft.App/managedEnvironments/team-friendship-container-app-env"
+        name                                        = "team-friendship-container-app-env"
+        tags                                        = {}
+        # (17 unchanged attributes hidden)
+
+      - workload_profile {
+          - maximum_count         = 0 -> null
+          - minimum_count         = 0 -> null
+          - name                  = "Consumption" -> null
+          - workload_profile_type = "Consumption" -> null
+        }
+    }
+
+Plan: 0 to add, 3 to change, 0 to destroy.
+::debug::Terraform exited with code 0.
+::debug::stdout: %0ATerraform used the selected providers to generate the following execution%0Aplan. Resource actions are indicated with the following symbols:%0A  ~ update in-place%0A%0ATerraform will perform the following actions:%0A%0A  # azurerm_container_app.backend will be updated in-place%0A  ~ resource "azurerm_container_app" "backend" {%0A        id                            = "/subscriptions/ca3b1116-a974-4549-88c2-8b56da5130d0/resourceGroups/team-friendship-rg/providers/Microsoft.App/containerApps/team-friendship-backend-ca"%0A        name                          = "team-friendship-backend-ca"%0A        tags                          = {}%0A      - workload_profile_name         = "Consumption" -> null%0A        # (9 unchanged attributes hidden)%0A%0A      ~ template {%0A            # (6 unchanged attributes hidden)%0A%0A          ~ container {%0A              ~ image             = "acraiacademy26.azurecr.io/team-friendship-backend:sha-166c1c4997daa738db0596aa419a261af511f5f6" -> "acraiacademy26.azurecr.io/team-friendship-backend:sha-5323a21e637c7e01b05561a0efc99094234293b2"%0A              ~ memory            = "1Gi" -> "1.0Gi"%0A                name              = "team-friendship-backend-container"%0A                # (4 unchanged attributes hidden)%0A%0A                # (4 unchanged blocks hidden)%0A            }%0A          ~ container {%0A              ~ memory            = "1Gi" -> "1.0Gi"%0A                name              = "postgres"%0A                # (5 unchanged attributes hidden)%0A%0A                # (3 unchanged blocks hidden)%0A            }%0A        }%0A%0A        # (7 unchanged blocks hidden)%0A    }%0A%0A  # azurerm_container_app.frontend will be updated in-place%0A  ~ resource "azurerm_container_app" "frontend" {%0A        id                            = "/subscriptions/ca3b1116-a974-4549-88c2-8b56da5130d0/resourceGroups/team-friendship-rg/providers/Microsoft.App/containerApps/team-friendship-frontend-ca"%0A        name                          = "team-friendship-frontend-ca"%0A        tags                          = {}%0A      - workload_profile_name         = "Consumption" -> null%0A        # (9 unchanged attributes hidden)%0A%0A      ~ template {%0A            # (6 unchanged attributes hidden)%0A%0A          ~ container {%0A              ~ memory            = "1Gi" -> "1.0Gi"%0A                name              = "team-friendship-frontend-container"%0A                # (5 unchanged attributes hidden)%0A%0A                # (3 unchanged blocks hidden)%0A            }%0A        }%0A%0A        # (3 unchanged blocks hidden)%0A    }%0A%0A  # azurerm_container_app_environment.app will be updated in-place%0A  ~ resource "azurerm_container_app_environment" "app" {%0A        id                                          = "/subscriptions/ca3b1116-a974-4549-88c2-8b56da5130d0/resourceGroups/team-friendship-rg/providers/Microsoft.App/managedEnvironments/team-friendship-container-app-env"%0A        name                                        = "team-friendship-container-app-env"%0A        tags                                        = {}%0A        # (17 unchanged attributes hidden)%0A%0A      - workload_profile {%0A          - maximum_count         = 0 -> null%0A          - minimum_count         = 0 -> null%0A          - name                  = "Consumption" -> null%0A          - workload_profile_type = "Consumption" -> null%0A        }%0A    }%0A%0APlan: 0 to add, 3 to change, 0 to destroy.%0A
+::debug::stderr: 
+::debug::exitcode: 0
