@@ -47,8 +47,6 @@ VALUES
     ('Greg', 'Heffley', '88 Burger Town', 'BT12 ABC', 'gregheffley@example.com', '0334455667', '$argon2id$v=19$m=19456,t=2,p=1$w1mKkfMCvhaJAn4JJO524w$QXcWumehXC1V5If+MnOFeVXgvRU/nnOGUTmqR35EKwo'),
     ('Eva', 'Rouffet', '99 Peanuts Street', 'BT16 DDD', 'eva@example.com', '0445566778', '$argon2id$v=19$m=19456,t=2,p=1$cBWIwKee85ipl5fHE3m3hg$wXljgOWvNIWa5eNVocZ1Z2Fy/r8ExJ0rxW7DVcPQCNg');
 
-
-
 INSERT INTO "Order"(
     "orderID",
     "customerID",
