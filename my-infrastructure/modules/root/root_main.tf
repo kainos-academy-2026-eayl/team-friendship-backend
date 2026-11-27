@@ -138,6 +138,36 @@ resource "azurerm_container_app" "backend" {
         name  = "POSTGRES_DB"
         value = var.db_name
       }
+
+      env {
+        name        = "POSTGRES_ADMIN_USER"
+        secret_name = "admin-username"
+      }
+
+      env {
+        name        = "POSTGRES_ADMIN_PASSWORD"
+        secret_name = "admin-password"
+      }
+
+      env {
+        name        = "POSTGRES_MAILER"
+        secret_name = "mailer"
+      }
+
+      env {
+        name        = "POSTGRES_MAILER_PASSWORD"
+        secret_name = "mailer-password"
+      }
+
+      env {
+        name        = "POSTGRES_ADMIN_EMAIL"
+        secret_name = "admin-email"
+      }
+
+      env {
+        name        = "POSTGRES_MAILER_EMAIL"
+        secret_name = "mailer-email"
+      }
     }
   }
 
@@ -164,6 +194,67 @@ resource "azurerm_container_app" "backend" {
     key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/POSTGRES-PASSWORD"
     identity            = azurerm_user_assigned_identity.app.id
   }
+
+  secret {
+    name                = "sender-email"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/SENDER-EMAIL"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "mail-from-name"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/MAIL-FROM-NAME"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "mail-encryption"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/MAIL-ENCRYPTION"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "mail-password"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/MAIL-PASSWORD"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "mail-username"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/MAIL-USERNAME"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "mail-port"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/MAIL-PORT"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "mail-host"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/MAIL-HOST"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "mail-mailer"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/MAIL-MAILER"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "admin-username"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/ADMIN-USERNAME"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
+  secret {
+    name                = "admin-password"
+    key_vault_secret_id = "${azurerm_key_vault.app.vault_uri}secrets/ADMIN-PASSWORD"
+    identity            = azurerm_user_assigned_identity.app.id
+  }
+
 }
 
 # frontend container app
