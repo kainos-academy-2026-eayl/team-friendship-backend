@@ -18,9 +18,9 @@ provider "azurerm" {
 }
 
 module "resource-group" {
-  source = "../resource-group"
+  source              = "../resource-group"
   resource_group_name = var.resource_group_name
-  environment       = var.environment
+  environment         = var.environment
 }
 
 data "azurerm_client_config" "current" {} # Retrieves information about the current Azure client (subscription, tenant, etc)
