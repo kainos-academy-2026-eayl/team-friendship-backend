@@ -9,4 +9,3 @@ variable "environment" {
   type        = string                                               # plain text value
   default     = "dev"
 }
-
