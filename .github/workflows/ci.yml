@@ -188,10 +188,10 @@ jobs:
         run: terraform validate
 
       - name: Plan Terraform
-        run: terraform plan -var-file=dev.tfvars
+        run: terraform plan -var-file=dev_variables.tfvars
 
       - name: Apply Terraform
-        run: terraform apply -var-file=dev.tfvars -auto-approve
+        run: terraform apply -var-file=dev_variables.tfvars -auto-approve
 
   terraform-plan:
     name: Plan terraform
@@ -231,7 +231,7 @@ jobs:
         run: terraform init
 
       - name: Plan Terraform
-        run: terraform plan -var-file=dev.tfvars -out=tfplan
+        run: terraform plan -var-file=dev_variables.tfvars -out=tfplan
 
   terraform-prod:
     name: Deploy prod infrastructure with terraform
@@ -270,7 +270,7 @@ jobs:
         run: terraform validate
 
       - name: Plan Terraform
-        run: terraform plan -var-file=prod.tfvars
+        run: terraform plan -var-file=prod_variables.tfvars
 
       - name: Apply Terraform
-        run: terraform apply -var-file=prod.tfvars -auto-approve
+        run: terraform apply -var-file=prod_variables.tfvars -auto-approve
