@@ -34,7 +34,7 @@ resource "azurerm_storage_account" "tfstate" {
 }
 
 resource "azurerm_storage_account" "prod_tfstate" {
-  name                     = "teamfriendshipprodtfstate" # must be globally unique
+  name                     = "teamfriendshipprodstate" # must be globally unique
   resource_group_name      = azurerm_resource_group.prod_tfstate.name
   location                 = azurerm_resource_group.prod_tfstate.location
   account_tier             = "Standard"
