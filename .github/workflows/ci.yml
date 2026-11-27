@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -119,7 +120,7 @@ jobs:
         run: az acr repository show -n ${{ secrets.ACR_NAME }} --image team-friendship-backend:sha-${{ github.sha }} # Check the full SHA tag
 
   terraform:
-    name: Deploy infrastructure with terraform
+    name: Deploy dev infrastructure with terraform
     needs: azure
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -156,10 +157,10 @@ jobs:
         run: terraform validate
 
       - name: Plan Terraform
-        run: terraform plan
+        run: terraform plan -var-file=dev.tfvars
 
       - name: Apply Terraform
-        run: terraform apply -auto-approve
+        run: terraform apply -var-file=dev.tfvars -auto-approve
 
   terraform-plan:
     name: Plan terraform
@@ -194,4 +195,46 @@ jobs:
         run: terraform init
 
       - name: Plan Terraform
-        run: terraform plan -out=tfplan
+        run: terraform plan -var-file=dev.tfvars -out=tfplan
+
+  terraform-prod:
+    name: Deploy prod infrastructure with terraform
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
+      TENANT_ID: ${{ secrets.TENANT_ID }}
+      SUBSCRIPTION_ID: ${{ secrets.SUBSCRIPTION_ID }}
+    defaults:
+      run:
+        working-directory: my-infrastructure/modules/root
+    if: github.event_name == 'workflow_dispatch' # Only deploy when approved manually
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Azure
+        run: >-
+          az login --service-principal
+          --username "$CLIENT_ID"
+          --password "$CLIENT_SECRET"
+          --tenant "$TENANT_ID"
+          --subscription "$SUBSCRIPTION_ID"
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+
+      - name: Initialize Terraform
+        run: terraform init
+
+      - name: Format Terraform
+        run: terraform fmt
+
+      - name: Validate Terraform
+        run: terraform validate
+
+      - name: Plan Terraform
+        run: terraform plan -var-file=prod.tfvars
+
+      - name: Apply Terraform
+        run: terraform apply -var-file=prod.tfvars -auto-approve
