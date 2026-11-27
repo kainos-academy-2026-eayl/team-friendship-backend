@@ -50,18 +50,6 @@ resource "azurerm_container_app_environment" "app" {
   location            = module.resource-group.location
 }
 
-# Database
-
-data "azurerm_key_vault_secret" "postgres_user" {
-  name         = "POSTGRES-USER"
-  key_vault_id = azurerm_key_vault.app.id
-}
-
-data "azurerm_key_vault_secret" "postgres_password" {
-  name         = "POSTGRES-PASSWORD"
-  key_vault_id = azurerm_key_vault.app.id
-}
-
 # backend container app
 
 resource "azurerm_container_app" "backend" {
