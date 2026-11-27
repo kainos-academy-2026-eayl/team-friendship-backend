@@ -197,6 +197,9 @@ jobs:
     needs: resolve-frontend
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions: # These permissions are needed to write the change log
+      contents: read
+      id-token: write
     env:
       CLIENT_ID: ${{ secrets.CLIENT_ID }}
       CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
@@ -231,3 +234,17 @@ jobs:
 
       - name: Plan Terraform
         run: terraform plan -out=tfplan
+      
+      - name: Write log
+        run: terraform show -no-color tfplan > terraform-plan-log.txt
+
+      - name: Commit log # Adds a small commit to the branch containing the file, if there are changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git add terraform-plan-log.txt
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Update terraform plan log"
+          git push origin "HEAD:${BRANCH}"
